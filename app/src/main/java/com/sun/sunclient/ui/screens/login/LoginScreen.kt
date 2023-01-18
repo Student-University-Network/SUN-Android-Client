@@ -2,6 +2,7 @@ package com.sun.sunclient.ui.screens.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -39,7 +40,8 @@ fun LoginScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.primary),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -48,14 +50,15 @@ fun LoginScreen(
             text = University.nickname,
             fontSize = 42.sp,
             fontStyle = FontStyle.Italic,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary
         )
         Column(
             verticalArrangement = Arrangement.spacedBy(32.dp),
             horizontalAlignment = Alignment.Start,
             modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
+                .fillMaxWidth(0.9f)
+                .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(20.dp))
                 .padding(vertical = 28.dp, horizontal = 28.dp)
         ) {
             // heading
@@ -126,7 +129,7 @@ fun LoginScreen(
                 // forgot password
                 TextButton(
                     modifier = Modifier
-                        .padding(vertical = 14.dp),
+                        .padding(top = 14.dp),
                     onClick = { },
                 ) {
                     Text(
