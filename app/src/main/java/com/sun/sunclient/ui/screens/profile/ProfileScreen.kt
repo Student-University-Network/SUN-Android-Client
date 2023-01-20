@@ -7,7 +7,6 @@ import com.sun.sunclient.application.MainViewModel
 
 @Composable
 fun ProfileScreen(
-    onNavigateToHome: () -> Unit,
     mainViewModel: MainViewModel
 ) {
     Text("Profile Screen")

@@ -18,6 +18,7 @@ import com.sun.sunclient.application.MainViewModel
 @Composable
 fun HomeScreen(
     onNavigateToProfile: () -> Unit,
+    onNavigateToCourses: () -> Unit,
     mainViewModel: MainViewModel
 ) {
     val scrollState = rememberScrollState()
@@ -59,7 +60,7 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // TODO: add ServiceCard for each service
-            ServicesCard()
+            ServicesCard(onServiceClick = { onNavigateToCourses() })
             ServicesCard()
             ServicesCard()
             ServicesCard()

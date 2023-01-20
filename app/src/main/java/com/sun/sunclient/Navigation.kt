@@ -1,5 +1,7 @@
 package com.sun.sunclient
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -14,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sun.sunclient.application.MainViewModel
+import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen
 import com.sun.sunclient.ui.screens.profile.ProfileScreen
@@ -36,20 +39,33 @@ fun AppNavigation(
         }
     }
 
-    fun navigateToHome() {
-        navController.navigate(Screen.HOME.route) {
-            popUpTo(Screen.HOME.route) { inclusive = true }
+    fun navigateToCourses() {
+        navController.navigate(Screen.COURSES.route) {
+            popUpTo(Screen.HOME.route)
+            currentScreen = Screen.COURSES
+        }
+    }
+
+    fun navigateBack() {
+        navController.popBackStack()
+        if (navController.currentDestination?.route == Screen.HOME.route) {
             currentScreen = Screen.HOME
         }
     }
 
+    fun navigateInScreen(screen: Screen) {
+        navController.navigate(screen.route)
+    }
+
+    BackHandler { navigateBack() }
+    
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopBar(
                 currentScreen = currentScreen,
                 onProfileClick = { navigateToProfile() },
-                onBackClick = { navigateToHome() }
+                onBackClick = { navigateBack() }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -63,20 +79,23 @@ fun AppNavigation(
                 composable(Screen.HOME.route) {
                     HomeScreen(
                         onNavigateToProfile = { navigateToProfile() },
+                        onNavigateToCourses = { navigateToCourses() },
                         mainViewModel = mainViewModel
                     )
                 }
                 composable(Screen.PROFILE.route) {
                     ProfileScreen(
-                        onNavigateToHome = { navigateToHome() },
                         mainViewModel = mainViewModel
                     )
                 }
                 composable(Screen.COURSES.route) {
                     CoursesScreen(
-                        onNavigateToHome = { navigateToHome() },
-                        mainViewModel = mainViewModel
+                        mainViewModel = mainViewModel,
+                        navigateInScreen = { sc -> navigateInScreen(sc) }
                     )
+                }
+                composable(Screen.COURSEPAGE.route) {
+                    CoursePage()
                 }
                 // TODO: add rest of routes
             }
