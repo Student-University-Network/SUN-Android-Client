@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sun.sunclient.application.MainViewModel
+import com.sun.sunclient.ui.screens.announcements.AnnouncementScreen
 import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen
@@ -43,6 +44,12 @@ fun AppNavigation(
         navController.navigate(Screen.COURSES.route) {
             popUpTo(Screen.HOME.route)
             currentScreen = Screen.COURSES
+        }
+    }
+    fun navigateToAnnouncements(){
+        navController.navigate(Screen.ANNOUNCEMENTS.route){
+            popUpTo(Screen.HOME.route)
+            currentScreen = Screen.ANNOUNCEMENTS
         }
     }
 
@@ -80,6 +87,7 @@ fun AppNavigation(
                     HomeScreen(
                         onNavigateToProfile = { navigateToProfile() },
                         onNavigateToCourses = { navigateToCourses() },
+                        onNavigateToAnnouncements = { navigateToAnnouncements() },
                         mainViewModel = mainViewModel
                     )
                 }
@@ -96,6 +104,9 @@ fun AppNavigation(
                 }
                 composable(Screen.COURSEPAGE.route) {
                     CoursePage()
+                }
+                composable(Screen.ANNOUNCEMENTS.route){
+                    AnnouncementScreen()
                 }
                 // TODO: add rest of routes
             }

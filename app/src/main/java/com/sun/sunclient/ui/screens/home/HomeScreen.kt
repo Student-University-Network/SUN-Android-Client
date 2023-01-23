@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +19,7 @@ import com.sun.sunclient.application.MainViewModel
 @Composable
 fun HomeScreen(
     onNavigateToProfile: () -> Unit,
+    onNavigateToAnnouncements: () -> Unit,
     onNavigateToCourses: () -> Unit,
     mainViewModel: MainViewModel
 ) {
@@ -60,12 +62,42 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // TODO: add ServiceCard for each service
-            ServicesCard(onServiceClick = { onNavigateToCourses() })
-            ServicesCard()
-            ServicesCard()
-            ServicesCard()
-            ServicesCard()
-            ServicesCard()
+            ServicesCard(
+                onServiceClick = { onNavigateToAnnouncements() },
+                title = "Announcements",
+                info = "New announcements have arrived",
+                painter = painterResource(id = R.drawable.ic_announcements),
+            )
+            ServicesCard(
+                onServiceClick = { onNavigateToCourses() },
+                title = "Courses",
+                info = "New Material Added",
+                painter = painterResource(id = R.drawable.ic_courses)
+            )
+            ServicesCard(
+                onServiceClick = { onNavigateToCourses() },
+                title = "Courses",
+                info = "New Material Added",
+                painter = painterResource(id = R.drawable.ic_courses)
+            )
+            ServicesCard(
+                onServiceClick = { onNavigateToCourses() },
+                title = "Courses",
+                info = "New Material Added",
+                painter = painterResource(id = R.drawable.ic_courses)
+            )
+            ServicesCard(
+                onServiceClick = { onNavigateToCourses() },
+                title = "Courses",
+                info = "New Material Added",
+                painter = painterResource(id = R.drawable.ic_courses)
+            )
+            ServicesCard(
+                onServiceClick = { onNavigateToCourses() },
+                title = "Courses",
+                info = "New Material Added",
+                painter = painterResource(id = R.drawable.ic_courses)
+            )
         }
     }
 }
@@ -74,7 +106,10 @@ fun HomeScreen(
 @Composable
 fun ServicesCard(
     modifier: Modifier = Modifier,
-    onServiceClick: () -> Unit = {}
+    onServiceClick: () -> Unit = {},
+    title: String,
+    info: String,
+    painter: Painter,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(0.8f),
@@ -90,17 +125,19 @@ fun ServicesCard(
         ) {
             // TODO: replace placeholder service
             Image(
-                modifier = Modifier.padding(12.dp).size(32.dp),
-                painter = painterResource(id = R.drawable.ic_courses),
-                contentDescription = "Courses",
+                modifier = Modifier
+                    .padding(12.dp)
+                    .size(32.dp),
+                painter = painter,
+                contentDescription = title,
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
             )
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                Text("Courses", fontSize = 18.sp)
-                Text("New material added", fontSize = 12.sp, fontWeight = FontWeight.Light)
+                Text("$title", fontSize = 18.sp)
+                Text("$info", fontSize = 12.sp, fontWeight = FontWeight.Light)
             }
         }
     }

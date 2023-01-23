@@ -13,6 +13,6 @@ sealed class Screen(
     object COURSEPAGE: Screen("courses/coursepage", "Courses", R.drawable.ic_courses)
     object ATTENDANCE : Screen("attendance", "Attendance", R.drawable.ic_courses)
     object TIMETABLE : Screen("timetable", "Timetable", R.drawable.ic_courses)
-    object ANNOUCEMENTS : Screen("announcements", "Announcements", R.drawable.ic_announcements)
+    object ANNOUNCEMENTS : Screen("announcements", "Announcements", R.drawable.ic_announcements)
     object DISUCSSION : Screen("discussion", "Discussion", R.drawable.ic_courses)
 }
