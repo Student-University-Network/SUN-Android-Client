@@ -45,7 +45,7 @@ fun TopBar(
                     if (currentScreen == Screen.HOME) {
                         Icon(
                             painter = painterResource(id = currentScreen.icon),
-                            contentDescription = "Home"
+                            contentDescription = currentScreen.name,
                         )
                     } else {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Go Back")
