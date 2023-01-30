@@ -44,7 +44,7 @@ fun TopBar(
                 IconButton(onClick = { if (currentScreen != Screen.HOME) onBackClick() }) {
                     if (currentScreen == Screen.HOME) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_dashboard),
+                            painter = painterResource(id = currentScreen.icon),
                             contentDescription = "Home"
                         )
                     } else {

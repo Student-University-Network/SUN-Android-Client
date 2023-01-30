@@ -7,7 +7,7 @@ sealed class Screen(
     val name: String,
     val icon: Int
 ) {
-    object HOME : Screen("home", "Home", R.drawable.ic_dashboard)
+    object HOME : Screen("home", "Home", R.drawable.ic_app_icon)
     object PROFILE : Screen("profile", "Profile", R.drawable.ic_dashboard)
     object COURSES : Screen("courses", "Courses", R.drawable.ic_courses)
     object COURSEPAGE: Screen("courses/coursepage", "Courses", R.drawable.ic_courses)

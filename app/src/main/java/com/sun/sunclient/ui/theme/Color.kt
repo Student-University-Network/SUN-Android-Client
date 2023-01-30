@@ -2,7 +2,7 @@ package com.sun.sunclient.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val md_theme_light_primary = Color(0xFF596EFF)
+val md_theme_light_primary = Color(0xFF3D7DDC)
 val md_theme_light_onPrimary = Color(0xFFFFFFFF)
 val md_theme_light_primaryContainer = Color(0xFFDFE0FF)
 val md_theme_light_onPrimaryContainer = Color(0xFF0018AF)

@@ -27,7 +27,7 @@ import com.sun.sunclient.utils.Screen
 @Composable
 fun AppNavigation(
     startDestination: Screen = Screen.HOME,
-    mainViewModel: MainViewModel = viewModel()
+    mainViewModel: MainViewModel
 ) {
     val navController: NavHostController = rememberNavController()
     var currentScreen by remember { mutableStateOf<Screen>(Screen.HOME) }
