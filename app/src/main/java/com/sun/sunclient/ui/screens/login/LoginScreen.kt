@@ -41,7 +41,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary),
+            .background(MaterialTheme.colorScheme.surface),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -51,92 +51,96 @@ fun LoginScreen(
             fontSize = 42.sp,
             fontStyle = FontStyle.Italic,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
         )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(32.dp),
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(20.dp))
-                .padding(vertical = 28.dp, horizontal = 28.dp)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
-            // heading
-            Column {
-                Text(
-                    "Welcome",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontStyle = FontStyle.Italic
-                )
-                Text(
-                    text = "Sign in to continue",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Light
-                )
-            }
-            // username input
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = usernameState.value,
-                onValueChange = {
-                    usernameState.value = it
-                },
-                label = { Text("Username") },
-                leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Username") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            )
-            // password input
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = passwordState.value,
-                onValueChange = {
-                    passwordState.value = it
-                },
-                label = { Text("Password") },
-                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Username") },
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
-                        val visibilityIcon =
-                            if (passwordVisible.value) painterResource(id = R.drawable.ic_visibility_on)
-                            else painterResource(id = R.drawable.ic_visibility_off)
-                        val description =
-                            if (passwordVisible.value) "Show password" else "Hide password"
-                        Icon(painter = visibilityIcon, contentDescription = description)
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                visualTransformation =
-                if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation()
-            )
-            Column(horizontalAlignment = Alignment.End) {
-                // submit button
-                Button(
-                    onClick = {
-                        // TODO: login on click
-                        mainViewModel.logIn()
-                    },
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(vertical = 14.dp)
-                ) {
-                    Text("SIGN IN")
-                }
-                // forgot password
-                TextButton(
-                    modifier = Modifier
-                        .padding(top = 14.dp),
-                    onClick = { },
-                ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(32.dp),
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(4.dp))
+                    .padding(vertical = 28.dp, horizontal = 28.dp)
+            ) {
+                // heading
+                Column {
                     Text(
-                        "Forgot password?",
-                        fontWeight = FontWeight.Light,
-                        fontSize = 14.sp,
+                        "Welcome",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontStyle = FontStyle.Italic
                     )
+                    Text(
+                        text = "Sign in to continue",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Light
+                    )
+                }
+                // username input
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = usernameState.value,
+                    onValueChange = {
+                        usernameState.value = it
+                    },
+                    label = { Text("Username") },
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Username") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                )
+                // password input
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = passwordState.value,
+                    onValueChange = {
+                        passwordState.value = it
+                    },
+                    label = { Text("Password") },
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Username") },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
+                            val visibilityIcon =
+                                if (passwordVisible.value) painterResource(id = R.drawable.ic_visibility_on)
+                                else painterResource(id = R.drawable.ic_visibility_off)
+                            val description =
+                                if (passwordVisible.value) "Show password" else "Hide password"
+                            Icon(painter = visibilityIcon, contentDescription = description)
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    visualTransformation =
+                    if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation()
+                )
+                Column(horizontalAlignment = Alignment.End) {
+                    // submit button
+                    Button(
+                        onClick = {
+                            // TODO: login on click
+                            mainViewModel.logIn()
+                        },
+                        modifier = Modifier
+                            .padding(top = 16.dp)
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 14.dp)
+                    ) {
+                        Text("SIGN IN")
+                    }
+                    // forgot password
+                    TextButton(
+                        modifier = Modifier
+                            .padding(top = 14.dp),
+                        onClick = { },
+                    ) {
+                        Text(
+                            "Forgot password?",
+                            fontWeight = FontWeight.Light,
+                            fontSize = 14.sp,
+                        )
+                    }
                 }
             }
         }

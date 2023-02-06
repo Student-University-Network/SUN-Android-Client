@@ -56,7 +56,7 @@ fun CoursesScreen(
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 18.dp),
+            contentPadding = PaddingValues(vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -92,36 +92,66 @@ fun CourseCard(
     // TODO: use course data here instead of placeholders
     Card(
         modifier = Modifier.fillMaxWidth(0.85f),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(4.dp),
         onClick = { onCourseClick() }
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(
+            Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .padding(horizontal=16.dp)
+                    .size(60.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onBackground,
+                        shape = RoundedCornerShape(20)
+                    )
                     .padding(8.dp)
-                    .clip(RoundedCornerShape(50)),
-                painter = painterResource(id = R.drawable.im_subject_4),
-                contentDescription = "Subject logo",
-                contentScale = ContentScale.FillBounds,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
-            )
+            ) {
+                Image(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50)),
+                    painter = painterResource(id = R.drawable.im_subject_4),
+                    contentDescription = "Subject logo",
+                    contentScale = ContentScale.FillBounds,
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.surface)
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("AIDS-II", fontSize = 18.sp, overflow = TextOverflow.Ellipsis)
                 Text(
-                    "Prof. Yash Sawant",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Light,
-                    overflow = TextOverflow.Ellipsis
+                    "AIDS-II",
+                    fontSize = 18.sp,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.Bold
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(RoundedCornerShape(50)),
+                        painter = painterResource(id = R.drawable.ic_profile),
+                        contentDescription = "Professor profile image",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+                    )
+                    Text(
+                        "Prof. Yash Sawant",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Light,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Text("4 new posts", fontSize = 12.sp, overflow = TextOverflow.Ellipsis)
             }
         }
