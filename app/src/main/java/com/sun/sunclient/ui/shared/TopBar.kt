@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,14 +24,11 @@ fun TopBar(
     currentScreen: Screen,
     onProfileClick: () -> Unit,
     onBackClick: () -> Unit
-    // TODO add user state in args
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary)
-            .padding(12.dp),
-        color = MaterialTheme.colorScheme.primary
+            .padding(horizontal = 8.dp, vertical = 14.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -44,6 +42,7 @@ fun TopBar(
                 IconButton(onClick = { if (currentScreen != Screen.HOME) onBackClick() }) {
                     if (currentScreen == Screen.HOME) {
                         Icon(
+                            modifier = Modifier.size(24.dp),
                             painter = painterResource(id = currentScreen.icon),
                             contentDescription = currentScreen.name,
                         )
@@ -51,14 +50,14 @@ fun TopBar(
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Go Back")
                     }
                 }
-                Text(text = currentScreen.name, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(text = currentScreen.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             IconButton(onClick = { if (currentScreen != Screen.PROFILE) onProfileClick() }) {
                 // TODO: replace placeholder image with profile image
                 Image(
                     painter = painterResource(id = R.drawable.ic_profile),
                     contentDescription = "Profile image",
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
                 )
             }
         }

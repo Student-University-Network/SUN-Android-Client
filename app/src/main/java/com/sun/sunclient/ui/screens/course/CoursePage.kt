@@ -38,17 +38,18 @@ fun CoursePage(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 12.dp)
+        contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         item {
             // TODO: replace placeholder data with course data
             Card(
                 modifier = Modifier.fillMaxWidth(0.9f),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -67,12 +68,7 @@ fun CoursePage(
             TabRow(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .clip(roundedCorner)
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant,
-                        shape = roundedCorner
-                    ),
+                    .clip(roundedCorner),
                 selectedTabIndex = currentTab,
                 containerColor = MaterialTheme.colorScheme.surface,
                 indicator = { tabPosition ->
