@@ -1,5 +1,6 @@
 package com.sun.sunclient.ui.screens.login
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,33 +11,48 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sun.sunclient.application.MainViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sun.sunclient.R
-import com.sun.sunclient.config.University
-import com.sun.sunclient.ui.theme.SUNTheme
+import com.sun.sunclient.config.Config
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    mainViewModel: MainViewModel = viewModel()
+    setLoggedIn: () -> Unit,
 ) {
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val usernameState = rememberSaveable { mutableStateOf("") }
-    val passwordState = rememberSaveable { mutableStateOf("") }
-    val passwordVisible = rememberSaveable { mutableStateOf(false) }
+
+    val loginViewModel: LoginViewModel = hiltViewModel()
+
+    // local and states from view model
+    val state = loginViewModel.state
+
+    // show error messages in Toast
+    LaunchedEffect(Unit) {
+        loginViewModel.errorMessage.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // when logged in set logged in true in mainViewModel
+    LaunchedEffect(key1 = state.isLoggedIn) {
+        if (state.isLoggedIn) {
+            setLoggedIn()
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -47,7 +63,7 @@ fun LoginScreen(
     ) {
         Text(
             modifier = Modifier.padding(vertical = 40.dp, horizontal = 28.dp),
-            text = University.nickname,
+            text = Config.University.nickname,
             fontSize = 42.sp,
             fontStyle = FontStyle.Italic,
             fontWeight = FontWeight.Bold,
@@ -81,9 +97,9 @@ fun LoginScreen(
                 // username input
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
-                    value = usernameState.value,
-                    onValueChange = {
-                        usernameState.value = it
+                    value = state.username,
+                    onValueChange = { changedUsername ->
+                        loginViewModel.onEvent(LoginEvent.OnUsernameChange(changedUsername))
                     },
                     label = { Text("Username") },
                     leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Username") },
@@ -93,19 +109,19 @@ fun LoginScreen(
                 // password input
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
-                    value = passwordState.value,
-                    onValueChange = {
-                        passwordState.value = it
+                    value = state.password,
+                    onValueChange = { changedPassword ->
+                        loginViewModel.onEvent(LoginEvent.OnPasswordChange(changedPassword))
                     },
                     label = { Text("Password") },
                     leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Username") },
                     trailingIcon = {
-                        IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
+                        IconButton(onClick = { loginViewModel.onEvent(LoginEvent.TogglePasswordVisibility) }) {
                             val visibilityIcon =
-                                if (passwordVisible.value) painterResource(id = R.drawable.ic_visibility_on)
+                                if (state.isPasswordVisible) painterResource(id = R.drawable.ic_visibility_on)
                                 else painterResource(id = R.drawable.ic_visibility_off)
                             val description =
-                                if (passwordVisible.value) "Show password" else "Hide password"
+                                if (state.isPasswordVisible) "Show password" else "Hide password"
                             Icon(painter = visibilityIcon, contentDescription = description)
                         }
                     },
@@ -113,21 +129,29 @@ fun LoginScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     visualTransformation =
-                    if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation()
+                    if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation()
                 )
                 Column(horizontalAlignment = Alignment.End) {
                     // submit button
                     Button(
                         onClick = {
-                            // TODO: login on click
-                            mainViewModel.logIn()
+                            if (!state.isLoading) {
+                                loginViewModel.onEvent(LoginEvent.Login)
+                            }
                         },
                         modifier = Modifier
                             .padding(top = 16.dp)
                             .fillMaxWidth(),
                         contentPadding = PaddingValues(vertical = 14.dp)
                     ) {
-                        Text("SIGN IN")
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        } else {
+                            Text("SIGN IN")
+                        }
                     }
                     // forgot password
                     TextButton(
@@ -144,13 +168,5 @@ fun LoginScreen(
                 }
             }
         }
-    }
-}
-
-@Preview(device = "spec:width=411dp,height=720dp,dpi=320", showBackground = true)
-@Composable
-fun Preview() {
-    SUNTheme {
-        LoginScreen()
     }
 }

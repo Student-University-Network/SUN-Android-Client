@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,19 +17,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sun.sunclient.application.MainViewModel
 import com.sun.sunclient.R
 import com.sun.sunclient.utils.Screen
-import java.util.Stack
 
 @Composable
 fun CoursesScreen(
-    modifier: Modifier = Modifier,
-    mainViewModel: MainViewModel,
     navigateInScreen: (screen: Screen) -> Unit,
 ) {
 
-    // TODO: use courses data for empty condition
+    // TODO : use courses data for empty condition
     if (false) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -103,7 +98,7 @@ fun CourseCard(
         ) {
             Box(
                 modifier = Modifier
-                    .padding(horizontal=16.dp)
+                    .padding(horizontal = 16.dp)
                     .size(60.dp)
                     .background(
                         MaterialTheme.colorScheme.onBackground,

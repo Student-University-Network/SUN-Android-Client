@@ -20,7 +20,6 @@ import com.sun.sunclient.utils.Screen
 
 @Composable
 fun TopBar(
-    modifier: Modifier = Modifier,
     currentScreen: Screen,
     onProfileClick: () -> Unit,
     onBackClick: () -> Unit

@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sun.sunclient.R
-import com.sun.sunclient.config.University
+import com.sun.sunclient.config.Config
 
 @Composable
 fun SplashScreen() {
@@ -46,7 +46,7 @@ fun SplashScreen() {
             ),
             contentDescription = "App Logo",
         )
-        Text(University.nickname, fontSize = 42.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(Config.University.nickname, fontSize = 42.sp, fontWeight = FontWeight.Bold, color = Color.White)
         LinearProgressIndicator(
             modifier = Modifier.padding(vertical = 32.dp),
             color = Color(0xFF71A5F1),
