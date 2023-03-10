@@ -16,3 +16,8 @@ data class LoginResponse(
 data class RefreshResponse(
     val accessToken: String
 )
+
+data class LogoutResponse(
+    val status: String,
+    val message: String
+)

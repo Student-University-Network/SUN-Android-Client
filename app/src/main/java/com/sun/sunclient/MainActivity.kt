@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sun.sunclient.config.Config
-import com.sun.sunclient.ui.screens.error.ErrorOverlay
+import com.sun.sunclient.ui.shared.ErrorOverlay
 import com.sun.sunclient.ui.screens.splash.SplashScreen
 import com.sun.sunclient.ui.theme.SUNTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,12 +43,11 @@ class MainActivity : ComponentActivity() {
             var errorMsg by remember { mutableStateOf("Oops!!, something went wrong") }
             var errorIcon by remember { mutableStateOf(R.drawable.im_empty_page) }
 
-            // do network checks
-            LaunchedEffect(key1 = true) {
+            fun connectivityCheck() {
                 val coroutineScope = CoroutineScope(Dispatchers.IO)
                 coroutineScope.launch {
                     errorOverlayVisible = false
-                    if (!checkConnectivity()) {
+                    if (!internetAvailability()) {
                         Log.i(TAG, "No connectivity available")
                         errorOverlayVisible = true
                         errorMsg = "Internet not available"
@@ -65,6 +64,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // do network checks
+            LaunchedEffect(key1 = true) {
+                connectivityCheck()
+                mainViewModel.onStart()
+            }
+
             SUNTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -78,9 +83,18 @@ class MainActivity : ComponentActivity() {
                         } else {
                             Box(modifier = Modifier.fillMaxSize()) {
                                 AppNavigation(mainViewModel = mainViewModel)
-                                AnimatedVisibility(visible = errorOverlayVisible) {
+                                AnimatedVisibility(
+                                    visible = errorOverlayVisible,
+                                    enter = fadeIn(),
+                                    exit = fadeOut()
+                                ) {
                                     if (errorOverlayVisible) {
-                                        ErrorOverlay(iconId = errorIcon, message = errorMsg)
+                                        ErrorOverlay(
+                                            iconId = errorIcon,
+                                            message = errorMsg,
+                                            resolve = {
+                                                connectivityCheck()
+                                            })
                                     }
                                 }
                             }
@@ -92,7 +106,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // check internet and wifi availability
-    private fun checkConnectivity(): Boolean {
+    private fun internetAvailability(): Boolean {
         val connectivityManager =
             getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
         if (connectivityManager != null) {

@@ -21,11 +21,7 @@ class MainViewModel @Inject constructor(
     var loggedIn by mutableStateOf(false)
         private set
 
-    init {
-        onStart()
-    }
-
-    private fun onStart() {
+    fun onStart() {
         viewModelScope.launch {
             // TODO: do all data fetching on application start here
             loggedIn = repository.refresh()

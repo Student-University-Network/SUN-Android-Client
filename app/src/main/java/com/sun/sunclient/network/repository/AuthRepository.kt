@@ -1,5 +1,6 @@
 package com.sun.sunclient.network.repository
 
+import android.util.Log
 import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.schemas.LoginRequest
 import com.sun.sunclient.network.schemas.LoginResponse
@@ -11,6 +12,8 @@ class AuthRepository @Inject constructor(
     private val api: AuthApiService,
     private val dataStore: AppDataStore
 ) {
+    val TAG = "AuthRepository"
+
     suspend fun login(username: String, password: String): LoginResponse {
         var response: LoginResponse
         try {
@@ -45,7 +48,13 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun logout() {
-        dataStore.saveAccessToken("")
-        dataStore.saveCookieSet(HashSet())
+        try {
+            val response = api.logout()
+        } catch (e: HttpException) {
+            Log.e(TAG, "Error in logout")
+        } finally {
+            dataStore.saveAccessToken("")
+            dataStore.saveCookieSet(HashSet())
+        }
     }
 }

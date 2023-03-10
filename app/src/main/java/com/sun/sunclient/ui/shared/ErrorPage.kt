@@ -1,9 +1,10 @@
-package com.sun.sunclient.ui.screens.error
+package com.sun.sunclient.ui.shared
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,11 +22,10 @@ import androidx.compose.ui.unit.sp
 import com.sun.sunclient.R
 
 @Composable
-fun ErrorOverlay(iconId: Int, message: String) {
+fun ErrorOverlay(iconId: Int, message: String, resolve: () -> Unit) {
     Surface(
-        modifier = Modifier
-            .fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
     ) {
         Column(
             modifier = Modifier
@@ -53,6 +53,9 @@ fun ErrorOverlay(iconId: Int, message: String) {
                     colorFilter = ColorFilter.tint(Color(0xFF3F3F3F))
                 )
                 Text(message, fontSize = 18.sp, textAlign = TextAlign.Center)
+                Button(onClick = { resolve() }) {
+                    Text("Try again")
+                }
             }
         }
     }
@@ -61,5 +64,8 @@ fun ErrorOverlay(iconId: Int, message: String) {
 @Preview
 @Composable
 fun Preview() {
-    ErrorOverlay(iconId = R.drawable.ic_no_connection, message = "Internet not connected")
+    ErrorOverlay(
+        iconId = R.drawable.ic_no_connection,
+        message = "Internet not connected",
+        resolve = {})
 }
