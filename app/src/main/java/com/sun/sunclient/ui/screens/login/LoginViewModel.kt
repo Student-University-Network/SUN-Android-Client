@@ -5,10 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sun.sunclient.MyEvents
 import com.sun.sunclient.network.repository.AuthRepository
+import com.sun.sunclient.utils.AppEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,9 +17,6 @@ class LoginViewModel @Inject constructor(private val repository: AuthRepository)
 
     var state by mutableStateOf(LoginState())
         private set
-
-    private val _errorMessage = MutableSharedFlow<String>()
-    val errorMessage = _errorMessage.asSharedFlow()
 
     fun onEvent(event: LoginEvent) {
         when (event) {
@@ -43,9 +40,10 @@ class LoginViewModel @Inject constructor(private val repository: AuthRepository)
             state = state.copy(isLoading = true)
             val response = repository.login(username = state.username.trim(), password = state.password.trim())
             if (response.statusCode == 200) {
-                state = state.copy(isLoggedIn = true)
+                MyEvents.eventFlow.send(AppEvent.OnLogin)
+                MyEvents.eventFlow.send(AppEvent.SnackBar("Welcome !!"))
             } else {
-                _errorMessage.emit(response.message)
+                MyEvents.eventFlow.send(AppEvent.SnackBar(response.message))
             }
             state = state.copy(isLoading = false)
         }

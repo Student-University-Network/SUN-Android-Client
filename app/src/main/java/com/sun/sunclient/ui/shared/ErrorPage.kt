@@ -4,10 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +19,14 @@ import androidx.compose.ui.unit.sp
 import com.sun.sunclient.R
 
 @Composable
-fun ErrorOverlay(iconId: Int, message: String, resolve: () -> Unit) {
+fun ErrorOverlay(
+    iconId: Int,
+    message: String,
+    showResolve: Boolean = true,
+    showReject: Boolean = true,
+    resolve: () -> Unit,
+    reject: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
@@ -53,19 +57,24 @@ fun ErrorOverlay(iconId: Int, message: String, resolve: () -> Unit) {
                     colorFilter = ColorFilter.tint(Color(0xFF3F3F3F))
                 )
                 Text(message, fontSize = 18.sp, textAlign = TextAlign.Center)
-                Button(onClick = { resolve() }) {
-                    Text("Try again")
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (showResolve) {
+                        Button(onClick = { resolve() }) {
+                            Text("Try again")
+                        }
+                    }
+                    if (showReject) {
+                        OutlinedButton(
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                            onClick = { reject() }) {
+                            Text("Close")
+                        }
+                    }
                 }
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun Preview() {
-    ErrorOverlay(
-        iconId = R.drawable.ic_no_connection,
-        message = "Internet not connected",
-        resolve = {})
 }

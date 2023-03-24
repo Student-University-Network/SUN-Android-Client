@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -25,6 +26,10 @@ fun HomeScreen(
     onNavigateToCourses: () -> Unit,
     mainViewModel: MainViewModel
 ) {
+    LaunchedEffect(key1 = true) {
+        mainViewModel.syncData()
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier
@@ -52,7 +57,10 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // TODO: replace placeholder values with user details
-                    Text("Manas Raut", fontSize = 22.sp)
+                    Text(
+                        "${mainViewModel.userData.firstName} ${mainViewModel.userData.lastName}",
+                        fontSize = 22.sp
+                    )
                     Text("BEIT-2 | Roll no. 36", fontSize = 14.sp)
                     Text("2022-2023", fontSize = 14.sp)
                 }

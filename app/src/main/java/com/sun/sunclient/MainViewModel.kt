@@ -5,39 +5,57 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.repository.AuthRepository
+import com.sun.sunclient.network.repository.UserRepository
+import com.sun.sunclient.network.schemas.UserData
+import com.sun.sunclient.utils.AppEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
+    private val dataStore: AppDataStore,
 ) : ViewModel() {
 
-    var showSplashScreen by mutableStateOf(false)
-        private set
+    val TAG = "MainViewModel"
 
-    var loggedIn by mutableStateOf(false)
+    var userData by mutableStateOf(userRepository.userData)
         private set
 
     fun onStart() {
         viewModelScope.launch {
             // TODO: do all data fetching on application start here
-            loggedIn = repository.refresh()
-            showSplashScreen = true
+            if (dataStore.readAccessToken().first() != "") {
+                MyEvents.eventFlow.send(AppEvent.OnLogin)
+            }
+            if (authRepository.refresh()) {
+                if (userData.userId == "") {
+                    userRepository.getUserProfile()
+                }
+                syncData()
+            } else {
+                logout()
+            }
         }
     }
 
-    // TODO (temporary): replace with onEvent for MainViewModel
     fun setLoggedIn() {
-        loggedIn = true
+        viewModelScope.launch { MyEvents.eventFlow.send(AppEvent.OnLogin) }
     }
 
     fun logout() {
         viewModelScope.launch {
-            repository.logout()
-            loggedIn = false
+            authRepository.logout()
+            MyEvents.eventFlow.send(AppEvent.OnLogout)
         }
+    }
+
+    fun syncData() {
+        viewModelScope.launch { userData = userRepository.userData }
     }
 }

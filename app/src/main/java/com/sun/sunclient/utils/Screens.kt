@@ -1,12 +1,14 @@
 package com.sun.sunclient.utils
 
 import com.sun.sunclient.R
+import com.sun.sunclient.config.Config
 
 sealed class Screen(
     val route: String,
     val name: String,
     val icon: Int
 ) {
+    object SPLASH_SCREEN: Screen("splash", Config.University.name, R.drawable.ic_app_icon)
     object LOG_IN : Screen("login", "Log in", R.drawable.ic_app_icon)
     object HOME : Screen("home", "Home", R.drawable.ic_app_icon)
     object PROFILE : Screen("profile", "Profile", R.drawable.ic_dashboard)

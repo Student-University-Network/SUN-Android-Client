@@ -1,6 +1,5 @@
 package com.sun.sunclient.ui.screens.login
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +10,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,24 +33,7 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
 
     val loginViewModel: LoginViewModel = hiltViewModel()
-
-    // local and states from view model
     val state = loginViewModel.state
-
-    // show error messages in Toast
-    LaunchedEffect(Unit) {
-        loginViewModel.errorMessage.collect { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        }
-    }
-
-    // when logged in set logged in true in mainViewModel
-    LaunchedEffect(key1 = state.isLoggedIn) {
-        if (state.isLoggedIn) {
-            setLoggedIn()
-        }
-    }
-
 
     Column(
         modifier = Modifier

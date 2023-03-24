@@ -41,16 +41,18 @@ class AuthRepository @Inject constructor(
             dataStore.saveAccessToken(response.accessToken)
             true
         } catch (e: HttpException) {
+            // If response is Unauthorized then only auto logout
             false
         } catch (e: Exception) {
-            false
+            // If cant connect then stay as logged in
+            true
         }
     }
 
     suspend fun logout() {
         try {
             val response = api.logout()
-        } catch (e: HttpException) {
+        } catch (e: Exception) {
             Log.e(TAG, "Error in logout")
         } finally {
             dataStore.saveAccessToken("")
