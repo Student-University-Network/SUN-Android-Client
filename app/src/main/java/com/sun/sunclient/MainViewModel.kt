@@ -1,5 +1,6 @@
 package com.sun.sunclient
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -27,6 +28,10 @@ class MainViewModel @Inject constructor(
     var userData by mutableStateOf(userRepository.userData)
         private set
 
+    init {
+        Log.d(TAG, "INIT ${this}")
+    }
+
     fun onStart() {
         viewModelScope.launch {
             // TODO: do all data fetching on application start here
@@ -35,7 +40,7 @@ class MainViewModel @Inject constructor(
             }
             if (authRepository.refresh()) {
                 if (userData.userId == "") {
-                    userRepository.getUserProfile()
+                    userRepository.refreshCache()
                 }
                 syncData()
             } else {
@@ -45,17 +50,27 @@ class MainViewModel @Inject constructor(
     }
 
     fun setLoggedIn() {
-        viewModelScope.launch { MyEvents.eventFlow.send(AppEvent.OnLogin) }
+        viewModelScope.launch {
+            userRepository.refreshCache()
+            syncData()
+            MyEvents.eventFlow.send(AppEvent.OnLogin)
+        }
     }
 
     fun logout() {
         viewModelScope.launch {
+            userRepository.reset()
             authRepository.logout()
             MyEvents.eventFlow.send(AppEvent.OnLogout)
         }
     }
 
     fun syncData() {
-        viewModelScope.launch { userData = userRepository.userData }
+        viewModelScope.launch {
+            if (userRepository.userData.userId == "") {
+                userRepository.refreshCache()
+            }
+            userData = userRepository.userData
+        }
     }
 }

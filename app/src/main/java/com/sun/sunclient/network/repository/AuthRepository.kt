@@ -19,7 +19,7 @@ class AuthRepository @Inject constructor(
         try {
             response =
                 api.login(LoginRequest(username = username.trim(), password = password.trim()))
-            dataStore.saveAccessToken(response.accessToken)
+            dataStore.saveAccessToken(response.data.accessToken)
         } catch (e: HttpException) {
             val code = e.response()?.code() ?: 500
             val message = when (e.response()?.code()) {
@@ -27,10 +27,10 @@ class AuthRepository @Inject constructor(
                 400 -> "Username or password is incorrect"
                 else -> "Something went wrong. Please try again"
             }
-            response = LoginResponse(code, "failed", message, "", "")
+            response = LoginResponse(code, "failed", message)
         } catch (e: Exception) {
             response =
-                LoginResponse(500, "failed", "Server error !! Please try again later", "", "")
+                LoginResponse(500, "failed", "Server error !! Please try again later")
         }
         return response
     }

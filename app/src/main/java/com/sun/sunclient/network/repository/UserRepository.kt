@@ -1,11 +1,15 @@
 package com.sun.sunclient.network.repository
 
 import android.util.Log
+import com.sun.sunclient.MyEvents
 import com.sun.sunclient.network.schemas.*
 import com.sun.sunclient.network.service.UserApiService
+import com.sun.sunclient.utils.AppEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -20,7 +24,15 @@ class UserRepository @Inject constructor(
         private set
 
     init {
-        scope.launch { val resp = getUserProfile() }
+        scope.launch { val resp = refreshCache() }
+    }
+
+    suspend fun refreshCache() {
+        val resp = getUserProfile()
+    }
+
+    fun reset() {
+        userData = UserData()
     }
 
     suspend fun getUserProfile(): ProfileResponse {
@@ -41,12 +53,17 @@ class UserRepository @Inject constructor(
             val response = api.updateProfile(data)
             userData = response.data
             response
-        } catch (e : HttpException) {
+        } catch (e: HttpException) {
             Log.e(TAG, "UpdateUserProfile ${e.response().toString()}")
             e.response()?.errorBody()?.string()?.let {
                 // As error response is a array, wrap it with object to create valid JSON string
                 val errorResponse = JSONObject("{\"data\":$it}")
-                message = errorResponse.getJSONArray("data").getJSONObject(0).get("message") as String
+                val jsonData = errorResponse.get("data")
+                if (jsonData is JSONArray) {
+                    message = errorResponse.getJSONArray("data").getJSONObject(0).getString("message")
+                } else if (jsonData is JSONObject) {
+                    message = errorResponse.getJSONObject("data").getString("message")
+                }
             }
             ProfileResponse("failed", message)
         } catch (e: Exception) {
@@ -66,7 +83,12 @@ class UserRepository @Inject constructor(
             e.response()?.errorBody()?.string()?.let {
                 // As error response is a array, wrap it with object to create valid JSON string
                 val errorResponse = JSONObject("{\"data\":$it}")
-                message = errorResponse.getJSONArray("data").getJSONObject(0).get("message") as String
+                val jsonData = errorResponse.get("data")
+                if (jsonData is JSONArray) {
+                    message = errorResponse.getJSONArray("data").getJSONObject(0).getString("message")
+                } else if (jsonData is JSONObject) {
+                    message = errorResponse.getJSONObject("data").getString("message")
+                }
             }
             ChangePasswordResponse("failed", message)
         } catch (e: Exception) {

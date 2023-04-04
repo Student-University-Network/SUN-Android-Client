@@ -26,6 +26,12 @@ class ProfileViewModel @Inject constructor(private val userRepository: UserRepos
     var profileState by mutableStateOf(syncData(userRepository.userData))
         private set
 
+    init {
+        viewModelScope.launch {
+            userRepository.getUserProfile()
+        }
+    }
+
     fun onEvent(event: ProfileEvent) {
         when (event) {
             is ProfileEvent.EditPersonalDetails -> {
