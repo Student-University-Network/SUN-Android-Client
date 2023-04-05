@@ -8,8 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.repository.AuthRepository
+import com.sun.sunclient.network.repository.ProgramRepository
 import com.sun.sunclient.network.repository.UserRepository
-import com.sun.sunclient.network.schemas.UserData
 import com.sun.sunclient.utils.AppEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
@@ -20,17 +20,18 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
+    private val programRepository: ProgramRepository,
     private val dataStore: AppDataStore,
 ) : ViewModel() {
 
     val TAG = "MainViewModel"
 
-    var userData by mutableStateOf(userRepository.userData)
+    var userData by mutableStateOf(authRepository.userData)
+    private set
+    var programData by mutableStateOf(programRepository.programData)
         private set
-
-    init {
-        Log.d(TAG, "INIT ${this}")
-    }
+    var userProfile by mutableStateOf(userRepository.userProfile)
+        private set
 
     fun onStart() {
         viewModelScope.launch {
@@ -39,7 +40,7 @@ class MainViewModel @Inject constructor(
                 MyEvents.eventFlow.send(AppEvent.OnLogin)
             }
             if (authRepository.refresh()) {
-                if (userData.userId == "") {
+                if (userProfile.userId == "") {
                     userRepository.refreshCache()
                 }
                 syncData()
@@ -67,10 +68,13 @@ class MainViewModel @Inject constructor(
 
     fun syncData() {
         viewModelScope.launch {
-            if (userRepository.userData.userId == "") {
+            if (userRepository.userProfile.userId == "") {
                 userRepository.refreshCache()
+                programRepository.refreshCache()
             }
-            userData = userRepository.userData
+            userData = authRepository.userData
+            programData = programRepository.programData
+            userProfile = userRepository.userProfile
         }
     }
 }

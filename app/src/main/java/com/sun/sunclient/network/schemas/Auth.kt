@@ -9,16 +9,16 @@ data class LoginResponse(
     val statusCode: Int = 200,
     val status: String,
     val message: String,
-    val data: Data = Data()
+    val data: UserDetails = UserDetails()
 ) {
-    data class Data(
+    data class UserDetails(
         val accessToken: String = "",
         val firstName: String = "",
         val lastName: String = "",
         val username: String = "",
         val id: String = "",
         val role: String = "",
-        val programId: String = "",
+        val programId: String? = null,
     )
 }
 
@@ -29,7 +29,7 @@ data class RefreshResponse(
     val username: String,
     val id: String,
     val role: String,
-    val programId: String
+    val programId: String?
 )
 
 data class LogoutResponse(

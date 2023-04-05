@@ -43,4 +43,16 @@ class AppDataStore(@ApplicationContext private val context: Context) {
             preferences[COOKIE_SET_KEY] ?: HashSet()
         }
     }
+
+    suspend fun saveString(key: String, value: String) {
+        context.dataStore.edit { preferences ->
+            preferences[stringPreferencesKey(key)] = value
+        }
+    }
+
+    fun readString(key: String) : Flow<String> {
+        return context.dataStore.data.map { preferences ->
+            preferences[stringPreferencesKey(key)] ?: ""
+        }
+    }
 }

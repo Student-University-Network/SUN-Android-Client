@@ -6,8 +6,10 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.sun.sunclient.config.Config
 import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.repository.AuthRepository
+import com.sun.sunclient.network.repository.ProgramRepository
 import com.sun.sunclient.network.repository.UserRepository
 import com.sun.sunclient.network.service.AuthApiService
+import com.sun.sunclient.network.service.ProgramApiService
 import com.sun.sunclient.network.service.UserApiService
 import dagger.Module
 import dagger.Provides
@@ -71,7 +73,19 @@ object AppApi {
 
     @Singleton
     @Provides
-    fun provideUserRepository(api: UserApiService) : UserRepository {
-        return UserRepository(api)
+    fun provideUserRepository(api: UserApiService, dataStore: AppDataStore) : UserRepository {
+        return UserRepository(api, dataStore)
+    }
+
+    @Singleton
+    @Provides
+    fun provideProgramApiService(retrofit: Retrofit) : ProgramApiService {
+        return retrofit.create(ProgramApiService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun proviedProgramRepository(api: ProgramApiService, dataStore: AppDataStore) : ProgramRepository {
+        return ProgramRepository(api,dataStore)
     }
 }

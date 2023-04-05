@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sun.sunclient.config.Config
+import com.sun.sunclient.network.schemas.Program
 import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen

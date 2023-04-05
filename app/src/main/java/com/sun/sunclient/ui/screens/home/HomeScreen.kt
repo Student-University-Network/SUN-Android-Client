@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -18,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sun.sunclient.R
 import com.sun.sunclient.MainViewModel
+import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
@@ -58,11 +61,32 @@ fun HomeScreen(
                 ) {
                     // TODO: replace placeholder values with user details
                     Text(
-                        "${mainViewModel.userData.firstName} ${mainViewModel.userData.lastName}",
+                        "${mainViewModel.userProfile.firstName} ${mainViewModel.userProfile.lastName}",
                         fontSize = 22.sp
                     )
-                    Text("BEIT-2 | Roll no. 36", fontSize = 14.sp)
-                    Text("2022-2023", fontSize = 14.sp)
+                    if (mainViewModel.userData.role == "ADMIN") {
+                        Pill(label = "Admin")
+                    } else if (mainViewModel.userData.role == "STUDENT") {
+                        Text(
+                            "${mainViewModel.programData.programName} " +
+                                    "|" +
+                                    " ${
+                                        mainViewModel.programData.batches.find {
+                                            it.id == mainViewModel.programData.batchId
+                                        }?.batchName
+                                    }",
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            "${SimpleDateFormat("yyyy").format(mainViewModel.programData.startYear)}-${
+                                SimpleDateFormat(
+                                    "yyyy"
+                                ).format(mainViewModel.programData.endYear)
+                            }", fontSize = 14.sp
+                        )
+                    } else {
+                       Pill(label = "Faculty")
+                    }
                 }
             }
         }
@@ -152,4 +176,21 @@ fun ServicesCard(
             }
         }
     }
+}
+
+@Composable
+fun Pill(label: String) {
+    Text(
+        label,
+        fontSize = 14.sp,
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = ShapeDefaults.Large
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        color = MaterialTheme.colorScheme.primaryContainer
+    )
 }

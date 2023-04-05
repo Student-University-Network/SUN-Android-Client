@@ -23,7 +23,7 @@ class ProfileViewModel @Inject constructor(private val userRepository: UserRepos
     val TAG = "ProfileViewModel"
 
     val genderOptions = listOf("None", "MALE", "FEMALE", "OTHER")
-    var profileState by mutableStateOf(syncData(userRepository.userData))
+    var profileState by mutableStateOf(syncData(userRepository.userProfile))
         private set
 
     init {
@@ -41,7 +41,7 @@ class ProfileViewModel @Inject constructor(private val userRepository: UserRepos
                 updatePersonalDetails()
             }
             is ProfileEvent.ClosePersonalDetailsUpdate -> {
-                profileState = syncData(userRepository.userData)
+                profileState = syncData(userRepository.userProfile)
                 profileState = profileState.copy(isEditingPersonalDetails = false)
             }
             is ProfileEvent.ShowChangePassword -> {
