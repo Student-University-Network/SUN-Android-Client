@@ -7,6 +7,7 @@ import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.schemas.LoginRequest
 import com.sun.sunclient.network.schemas.LoginResponse
 import com.sun.sunclient.network.service.AuthApiService
+import com.sun.sunclient.utils.Constants.USER_DETAILS_KEY
 import com.sun.sunclient.utils.parseJson
 import com.sun.sunclient.utils.stringify
 import kotlinx.coroutines.CoroutineScope
@@ -33,9 +34,9 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun refreshCache() {
-        val dataString = dataStore.readString("user-details").first()
+        val dataString = dataStore.readString(USER_DETAILS_KEY).first()
         if (dataString != "") {
-            userData = parseJson(dataString, TypeToken.get(LoginResponse.UserDetails::class.java))
+            userData = parseJson(dataString, TypeToken.get(LoginResponse.UserDetails::class.java)) ?: LoginResponse.UserDetails()
         }
         val resp = refresh()
     }
@@ -54,7 +55,7 @@ class AuthRepository @Inject constructor(
                 username = response.data.username,
                 role = response.data.role
             )
-            dataStore.saveString("user-details", stringify(userData))
+            dataStore.saveString(USER_DETAILS_KEY, stringify(userData))
         } catch (e: HttpException) {
             val code = e.response()?.code() ?: 500
             val message = when (e.response()?.code()) {
@@ -82,7 +83,7 @@ class AuthRepository @Inject constructor(
                 username = response.username,
                 role = response.role
             )
-            dataStore.saveString("user-details", stringify(userData))
+            dataStore.saveString(USER_DETAILS_KEY, stringify(userData))
             true
         } catch (e: HttpException) {
             // If response is Unauthorized then only auto logout
@@ -101,6 +102,7 @@ class AuthRepository @Inject constructor(
         } finally {
             dataStore.saveAccessToken("")
             dataStore.saveCookieSet(HashSet())
+            dataStore.saveString(USER_DETAILS_KEY, "{}")
         }
     }
 }

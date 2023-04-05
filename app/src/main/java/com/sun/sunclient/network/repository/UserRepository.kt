@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken
 import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.schemas.*
 import com.sun.sunclient.network.service.UserApiService
+import com.sun.sunclient.utils.Constants.USER_PROFILE_KEY
 import com.sun.sunclient.utils.parseJson
 import com.sun.sunclient.utils.stringify
 import kotlinx.coroutines.CoroutineScope
@@ -32,22 +33,23 @@ class UserRepository @Inject constructor(
     }
 
     suspend fun refreshCache() {
-        val dataString = dataStore.readString("user-profile").first()
+        val dataString = dataStore.readString(USER_PROFILE_KEY).first()
         if (dataString != "") {
-            userProfile = parseJson(dataString, TypeToken.get(UserData::class.java))
+            userProfile = parseJson(dataString, TypeToken.get(UserData::class.java)) ?: UserData()
         }
         val resp = getUserProfile()
     }
 
-    fun reset() {
+    suspend fun reset() {
         userProfile = UserData()
+        dataStore.saveString(USER_PROFILE_KEY, "{}")
     }
 
     suspend fun getUserProfile(): ProfileResponse {
         return try {
             val response = api.getProfile()
             userProfile = response.data
-            dataStore.saveString("user-profile", stringify(userProfile))
+            dataStore.saveString(USER_PROFILE_KEY, stringify(userProfile))
             response
         } catch (e: Exception) {
             Log.e(TAG, "GetUserProfile: $e")
@@ -61,7 +63,7 @@ class UserRepository @Inject constructor(
         return try {
             val response = api.updateProfile(data)
             userProfile = response.data
-            dataStore.saveString("user-profile", stringify(userProfile))
+            dataStore.saveString(USER_PROFILE_KEY, stringify(userProfile))
             response
         } catch (e: HttpException) {
             Log.e(TAG, "UpdateUserProfile ${e.response().toString()}")

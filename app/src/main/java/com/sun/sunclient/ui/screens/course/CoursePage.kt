@@ -18,13 +18,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sun.sunclient.MainViewModel
+import com.sun.sunclient.network.schemas.Course
 
 data class TabItem(val name: String)
 
 @Composable
 fun CoursePage(
-
+    courseId: String,
+    mainViewModel: MainViewModel
 ) {
+    val courseData = mainViewModel.getCurrentSemester().courses.find { crs -> crs.courseId == courseId } ?: Course()
+
     var currentTab by remember { mutableStateOf(0) }
     val tabItems = listOf<TabItem>(
         TabItem("Resources"),
@@ -53,14 +58,13 @@ fun CoursePage(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("AIDS-II", fontSize = 22.sp, overflow = TextOverflow.Ellipsis)
+                    Text(courseData.courseName, fontSize = 22.sp, overflow = TextOverflow.Ellipsis)
                     Text(
-                        "Prof. Yash Sawant",
+                        "Prof. ${courseData.professorName}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Light,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text("4 new posts", fontSize = 12.sp, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

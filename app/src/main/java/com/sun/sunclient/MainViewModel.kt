@@ -10,6 +10,7 @@ import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.repository.AuthRepository
 import com.sun.sunclient.network.repository.ProgramRepository
 import com.sun.sunclient.network.repository.UserRepository
+import com.sun.sunclient.network.schemas.Semester
 import com.sun.sunclient.utils.AppEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
@@ -27,8 +28,10 @@ class MainViewModel @Inject constructor(
     val TAG = "MainViewModel"
 
     var userData by mutableStateOf(authRepository.userData)
-    private set
+        private set
     var programData by mutableStateOf(programRepository.programData)
+        private set
+    var facultyCourses by mutableStateOf(programRepository.facultyCourseData)
         private set
     var userProfile by mutableStateOf(userRepository.userProfile)
         private set
@@ -40,9 +43,6 @@ class MainViewModel @Inject constructor(
                 MyEvents.eventFlow.send(AppEvent.OnLogin)
             }
             if (authRepository.refresh()) {
-                if (userProfile.userId == "") {
-                    userRepository.refreshCache()
-                }
                 syncData()
             } else {
                 logout()
@@ -62,19 +62,24 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.reset()
             authRepository.logout()
+            programRepository.reset()
             MyEvents.eventFlow.send(AppEvent.OnLogout)
         }
     }
 
     fun syncData() {
         viewModelScope.launch {
-            if (userRepository.userProfile.userId == "") {
-                userRepository.refreshCache()
-                programRepository.refreshCache()
-            }
+            userRepository.refreshCache()
+            programRepository.refreshCache()
             userData = authRepository.userData
             programData = programRepository.programData
+            facultyCourses = programRepository.facultyCourseData
             userProfile = userRepository.userProfile
+            MyEvents.eventFlow.send(AppEvent.OnSyncedData)
         }
+    }
+
+    fun getCurrentSemester(): Semester {
+        return programData.semesters.getOrElse(programData.currentSemester) { Semester() }
     }
 }

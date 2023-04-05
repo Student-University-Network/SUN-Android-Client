@@ -14,5 +14,5 @@ sealed class AppEvent {
     object PopBackStack : AppEvent()
     object OnLogin : AppEvent()
     object OnLogout : AppEvent()
-//    object OnSyncData: AppEvent()
+    object OnSyncedData: AppEvent()
 }

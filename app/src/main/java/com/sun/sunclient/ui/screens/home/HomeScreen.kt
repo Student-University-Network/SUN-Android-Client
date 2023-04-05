@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sun.sunclient.R
 import com.sun.sunclient.MainViewModel
+import com.sun.sunclient.utils.Constants.ADMIN
+import com.sun.sunclient.utils.Constants.STUDENT
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -64,9 +66,9 @@ fun HomeScreen(
                         "${mainViewModel.userProfile.firstName} ${mainViewModel.userProfile.lastName}",
                         fontSize = 22.sp
                     )
-                    if (mainViewModel.userData.role == "ADMIN") {
+                    if (mainViewModel.userData.role == ADMIN) {
                         Pill(label = "Admin")
-                    } else if (mainViewModel.userData.role == "STUDENT") {
+                    } else if (mainViewModel.userData.role == STUDENT) {
                         Text(
                             "${mainViewModel.programData.programName} " +
                                     "|" +

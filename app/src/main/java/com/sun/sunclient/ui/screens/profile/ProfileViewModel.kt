@@ -61,6 +61,7 @@ class ProfileViewModel @Inject constructor(private val userRepository: UserRepos
             is ProfileEvent.OnPersonalDetailsChange -> {
                 profileState = event.updatedState.copy()
             }
+            else -> {}
         }
     }
 

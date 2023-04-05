@@ -3,29 +3,31 @@ package com.sun.sunclient
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.sun.sunclient.config.Config
-import com.sun.sunclient.network.schemas.Program
 import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen
@@ -41,8 +43,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -82,6 +82,13 @@ class MainActivity : ComponentActivity() {
             var topBarVisibility by remember { mutableStateOf(false) }
             val snackbarHostState = remember { SnackbarHostState() }
             var errorOverlayState by remember { mutableStateOf(OverlayDialogState()) }
+
+            var refreshing by remember { mutableStateOf(false) }
+            fun refresh() {
+                refreshing = true
+                mainViewModel.syncData()
+            }
+            val state = rememberPullRefreshState(refreshing, ::refresh)
 
             fun navigateAndClearStack(screen: Screen) {
                 navController.navigate(screen.route) {
@@ -171,9 +178,9 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-//                        is AppEvent.OnSyncData -> {
-//                            mainViewModel.syncData()
-//                        }
+                        is AppEvent.OnSyncedData -> {
+                            refreshing = false
+                        }
                     }
                 }
             }
@@ -188,15 +195,19 @@ class MainActivity : ComponentActivity() {
 
             // update currentScreen with navigation to display title in Topbar
             LaunchedEffect(key1 = navController.currentDestination) {
-                currentScreen = when (navController.currentDestination?.route) {
+                val route = navController.currentDestination?.route ?: ""
+                currentScreen = when (route) {
                     Screen.PROFILE.route -> Screen.PROFILE
-                    Screen.COURSEPAGE.route -> Screen.COURSEPAGE
                     Screen.COURSES.route -> Screen.COURSES
                     Screen.ANNOUCEMENTS.route -> Screen.ANNOUCEMENTS
                     Screen.ATTENDANCE.route -> Screen.ATTENDANCE
                     Screen.DISUCSSION.route -> Screen.DISUCSSION
                     Screen.TIMETABLE.route -> Screen.TIMETABLE
                     else -> Screen.HOME
+                }
+                val tmp = route.split("/")
+                if (tmp.first() == "courses" && tmp.size >= 1) {
+                    currentScreen = Screen.COURSES
                 }
             }
 
@@ -222,15 +233,15 @@ class MainActivity : ComponentActivity() {
                                     )
                                 ) {
 //                                    if (topBarVisibility) {
-                                        TopBar(
-                                            currentScreen = currentScreen,
-                                            onProfileClick = {
-                                                navController.navigate(Screen.PROFILE.route) {
-                                                    popUpTo(Screen.HOME.route)
-                                                }
-                                            },
-                                            onBackClick = { navController.popBackStack() }
-                                        )
+                                    TopBar(
+                                        currentScreen = currentScreen,
+                                        onProfileClick = {
+                                            navController.navigate(Screen.PROFILE.route) {
+                                                popUpTo(Screen.HOME.route)
+                                            }
+                                        },
+                                        onBackClick = { navController.popBackStack() }
+                                    )
 //                                    }
                                 }
                             },
@@ -239,7 +250,10 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(paddingValues)
+                                    .pullRefresh(state)
                             ) {
+                                PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter).zIndex(1f))
+
                                 NavHost(
                                     navController = navController,
                                     startDestination = Screen.SPLASH_SCREEN.route
@@ -272,15 +286,19 @@ class MainActivity : ComponentActivity() {
                                     }
                                     composable(Screen.COURSES.route) {
                                         CoursesScreen(
-                                            navigateInScreen = { screen ->
-                                                navController.navigate(screen.route) {
+                                            mainViewModel = mainViewModel,
+                                            navigateInScreen = { route ->
+                                                navController.navigate(route) {
                                                     launchSingleTop = true
                                                 }
                                             }
                                         )
                                     }
-                                    composable(Screen.COURSEPAGE.route) {
-                                        CoursePage()
+                                    composable(
+                                        "${Screen.COURSES.route}/{courseId}", arguments = listOf(
+                                            navArgument("courseId") { type = NavType.StringType })
+                                    ) {
+                                        CoursePage(it.arguments?.getString("courseId") ?: "", mainViewModel =mainViewModel)
                                     }
                                     // TODO: add rest of routes
                                 }
@@ -291,16 +309,16 @@ class MainActivity : ComponentActivity() {
                             enter = fadeIn(),
                             exit = fadeOut()
                         ) {
-                                ErrorOverlay(
-                                    iconId = errorOverlayState.icon,
-                                    message = errorOverlayState.msg,
-                                    resolve = {
-                                        connectivityCheck()
-                                    },
-                                    reject = {
-                                        errorOverlayState = OverlayDialogState()
-                                    }
-                                )
+                            ErrorOverlay(
+                                iconId = errorOverlayState.icon,
+                                message = errorOverlayState.msg,
+                                resolve = {
+                                    connectivityCheck()
+                                },
+                                reject = {
+                                    errorOverlayState = OverlayDialogState()
+                                }
+                            )
                         }
                     }
                 }
