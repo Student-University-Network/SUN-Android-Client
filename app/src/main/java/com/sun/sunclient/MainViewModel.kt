@@ -12,6 +12,7 @@ import com.sun.sunclient.network.repository.ProgramRepository
 import com.sun.sunclient.network.repository.UserRepository
 import com.sun.sunclient.network.schemas.Semester
 import com.sun.sunclient.utils.AppEvent
+import com.sun.sunclient.utils.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -38,10 +39,10 @@ class MainViewModel @Inject constructor(
 
     fun onStart() {
         viewModelScope.launch {
-            // TODO: do all data fetching on application start here
             if (dataStore.readAccessToken().first() != "") {
                 MyEvents.eventFlow.send(AppEvent.OnLogin)
             }
+            setGlobalData()
             if (authRepository.refresh()) {
                 syncData()
             } else {
@@ -52,9 +53,9 @@ class MainViewModel @Inject constructor(
 
     fun setLoggedIn() {
         viewModelScope.launch {
-            userRepository.refreshCache()
+            setGlobalData()
             syncData()
-            MyEvents.eventFlow.send(AppEvent.OnLogin)
+            MyEvents.eventFlow.send(AppEvent.Navigate(Screen.HOME, true))
         }
     }
 
@@ -63,6 +64,7 @@ class MainViewModel @Inject constructor(
             userRepository.reset()
             authRepository.logout()
             programRepository.reset()
+            setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnLogout)
         }
     }
@@ -71,12 +73,16 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.refreshCache()
             programRepository.refreshCache()
-            userData = authRepository.userData
-            programData = programRepository.programData
-            facultyCourses = programRepository.facultyCourseData
-            userProfile = userRepository.userProfile
+            setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnSyncedData)
         }
+    }
+
+    private fun setGlobalData() {
+        userData = authRepository.userData
+        programData = programRepository.programData
+        facultyCourses = programRepository.facultyCourseData
+        userProfile = userRepository.userProfile
     }
 
     fun getCurrentSemester(): Semester {

@@ -3,6 +3,7 @@ package com.sun.sunclient
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -43,6 +44,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -87,7 +89,12 @@ class MainActivity : ComponentActivity() {
             fun refresh() {
                 refreshing = true
                 mainViewModel.syncData()
+                coroutineScope.launch {
+                    delay(10 * 1000)
+                    refreshing = false
+                }
             }
+
             val state = rememberPullRefreshState(refreshing, ::refresh)
 
             fun navigateAndClearStack(screen: Screen) {
@@ -151,7 +158,7 @@ class MainActivity : ComponentActivity() {
                 MyEvents.eventFlowListener.collectLatest { event ->
                     when (event) {
                         is AppEvent.OnLogin -> {
-                            navigateAndClearStack(Screen.HOME)
+                            mainViewModel.setLoggedIn()
                         }
                         is AppEvent.OnLogout -> {
                             navigateAndClearStack(Screen.LOG_IN)
@@ -160,8 +167,12 @@ class MainActivity : ComponentActivity() {
                             navController.popBackStack()
                         }
                         is AppEvent.Navigate -> {
-                            navController.navigate(event.route.route) {
-                                popUpTo(Screen.HOME.route)
+                            if (event.clearStack) {
+                                navigateAndClearStack(event.route)
+                            } else {
+                                navController.navigate(event.route.route) {
+                                    popUpTo(Screen.HOME.route)
+                                }
                             }
                             currentScreen = event.route
                         }
@@ -232,7 +243,6 @@ class MainActivity : ComponentActivity() {
                                         targetOffsetY = { fullHeight -> fullHeight }
                                     )
                                 ) {
-//                                    if (topBarVisibility) {
                                     TopBar(
                                         currentScreen = currentScreen,
                                         onProfileClick = {
@@ -242,7 +252,6 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onBackClick = { navController.popBackStack() }
                                     )
-//                                    }
                                 }
                             },
                         ) { paddingValues ->
@@ -252,7 +261,12 @@ class MainActivity : ComponentActivity() {
                                     .padding(paddingValues)
                                     .pullRefresh(state)
                             ) {
-                                PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter).zIndex(1f))
+                                PullRefreshIndicator(
+                                    refreshing, state,
+                                    Modifier
+                                        .align(Alignment.TopCenter)
+                                        .zIndex(1f)
+                                )
 
                                 NavHost(
                                     navController = navController,
@@ -262,9 +276,7 @@ class MainActivity : ComponentActivity() {
                                         SplashScreen()
                                     }
                                     composable(Screen.LOG_IN.route) {
-                                        LoginScreen(
-                                            setLoggedIn = { mainViewModel.setLoggedIn() },
-                                        )
+                                        LoginScreen()
                                     }
                                     composable(Screen.HOME.route) {
                                         HomeScreen(
@@ -298,7 +310,10 @@ class MainActivity : ComponentActivity() {
                                         "${Screen.COURSES.route}/{courseId}", arguments = listOf(
                                             navArgument("courseId") { type = NavType.StringType })
                                     ) {
-                                        CoursePage(it.arguments?.getString("courseId") ?: "", mainViewModel =mainViewModel)
+                                        CoursePage(
+                                            it.arguments?.getString("courseId") ?: "",
+                                            mainViewModel = mainViewModel
+                                        )
                                     }
                                     // TODO: add rest of routes
                                 }
@@ -349,7 +364,7 @@ class MainActivity : ComponentActivity() {
                 val url = URL(Config.API_BASE_URL)
                 val connection = url.openConnection() as HttpURLConnection
                 connection.setRequestProperty("Connection", "close");
-                connection.connectTimeout = 10 * 1000;
+                connection.connectTimeout = 5 * 1000;
                 connection.connect();
                 true
             } catch (e: Exception) {

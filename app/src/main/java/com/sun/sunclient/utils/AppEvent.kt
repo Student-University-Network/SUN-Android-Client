@@ -10,7 +10,7 @@ sealed class AppEvent {
         val duration: SnackbarDuration = SnackbarDuration.Short,
         val resolve: () -> Unit = {}
     ) : AppEvent()
-    data class Navigate(val route: Screen) : AppEvent()
+    data class Navigate(val route: Screen, val clearStack: Boolean = false) : AppEvent()
     object PopBackStack : AppEvent()
     object OnLogin : AppEvent()
     object OnLogout : AppEvent()

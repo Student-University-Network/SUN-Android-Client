@@ -21,8 +21,8 @@ class ProgramRepository @Inject constructor(
     private val dataStore: AppDataStore
 ) {
 
-    val TAG = "ProgramRepository"
-    val scope = CoroutineScope(Dispatchers.IO)
+    private val TAG = "ProgramRepository"
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     var programData = Program()
         private set
@@ -30,7 +30,10 @@ class ProgramRepository @Inject constructor(
         private set
 
     init {
-        scope.launch { refreshCache() }
+        scope.launch {
+            readStoredData()
+            refreshCache()
+        }
     }
 
     suspend fun reset() {
@@ -39,8 +42,7 @@ class ProgramRepository @Inject constructor(
         dataStore.saveString(FACULTY_COURSES_KEY, "[]")
     }
 
-    suspend fun refreshCache() {
-
+    private suspend fun readStoredData() {
         var dataString = dataStore.readString(PROGRAM_DATA_KEY).first()
         if (dataString != "") {
             programData = parseJson(dataString, TypeToken.get(Program::class.java)) ?: Program()
@@ -52,13 +54,15 @@ class ProgramRepository @Inject constructor(
                 dataString,
                 TypeToken.getParameterized(ArrayList::class.java, FacultyCourse::class.java)
             )
-            if (tmp == null) {
-                facultyCourseData = ArrayList()
+            facultyCourseData = if (tmp == null) {
+                ArrayList()
             } else {
-                facultyCourseData = tmp as List<FacultyCourse>
+                tmp as List<FacultyCourse>
             }
         }
+    }
 
+    suspend fun refreshCache() {
         val programId = parseJson(
             dataStore.readString(USER_DETAILS_KEY).first(),
             TypeToken.get(Program::class.java)

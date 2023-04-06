@@ -22,21 +22,27 @@ class UserRepository @Inject constructor(
     private val api: UserApiService,
     private val dataStore: AppDataStore
 ) {
-    val TAG = "UserRepository"
-    val scope = CoroutineScope(Dispatchers.IO)
+    private val TAG = "UserRepository"
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     var userProfile = UserData()
         private set
 
     init {
-        scope.launch { val resp = refreshCache() }
+        scope.launch {
+            readStoredData()
+            refreshCache()
+        }
     }
 
-    suspend fun refreshCache() {
+    private suspend fun readStoredData() {
         val dataString = dataStore.readString(USER_PROFILE_KEY).first()
         if (dataString != "") {
             userProfile = parseJson(dataString, TypeToken.get(UserData::class.java)) ?: UserData()
         }
+    }
+
+    suspend fun refreshCache() {
         val resp = getUserProfile()
     }
 

@@ -31,9 +31,6 @@ fun HomeScreen(
     onNavigateToCourses: () -> Unit,
     mainViewModel: MainViewModel
 ) {
-    LaunchedEffect(key1 = true) {
-        mainViewModel.syncData()
-    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -61,7 +58,6 @@ fun HomeScreen(
                         .padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // TODO: replace placeholder values with user details
                     Text(
                         "${mainViewModel.userProfile.firstName} ${mainViewModel.userProfile.lastName}",
                         fontSize = 22.sp

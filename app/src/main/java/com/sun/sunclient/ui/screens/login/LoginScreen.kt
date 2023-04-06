@@ -26,9 +26,7 @@ import com.sun.sunclient.config.Config
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
-    setLoggedIn: () -> Unit,
-) {
+fun LoginScreen() {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 

@@ -96,6 +96,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun logout() {
         try {
+            userData = LoginResponse.UserDetails()
             val response = api.logout()
         } catch (e: Exception) {
             Log.e(TAG, "Error in logout")
