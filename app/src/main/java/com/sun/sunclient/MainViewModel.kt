@@ -9,8 +9,11 @@ import androidx.lifecycle.viewModelScope
 import com.sun.sunclient.data.AppDataStore
 import com.sun.sunclient.network.repository.AuthRepository
 import com.sun.sunclient.network.repository.ProgramRepository
+import com.sun.sunclient.network.repository.TimetableRepository
 import com.sun.sunclient.network.repository.UserRepository
+import com.sun.sunclient.network.schemas.LectureStatus
 import com.sun.sunclient.network.schemas.Semester
+import com.sun.sunclient.network.schemas.SetLectureInput
 import com.sun.sunclient.utils.AppEvent
 import com.sun.sunclient.utils.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +26,7 @@ class MainViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
     private val programRepository: ProgramRepository,
+    private val timetableRepository: TimetableRepository,
     private val dataStore: AppDataStore,
 ) : ViewModel() {
 
@@ -35,6 +39,8 @@ class MainViewModel @Inject constructor(
     var facultyCourses by mutableStateOf(programRepository.facultyCourseData)
         private set
     var userProfile by mutableStateOf(userRepository.userProfile)
+        private set
+    var timetableData by mutableStateOf(timetableRepository.timetableData)
         private set
 
     fun onStart() {
@@ -64,6 +70,7 @@ class MainViewModel @Inject constructor(
             userRepository.reset()
             authRepository.logout()
             programRepository.reset()
+            timetableRepository.reset()
             setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnLogout)
         }
@@ -73,6 +80,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.refreshCache()
             programRepository.refreshCache()
+            timetableRepository.refreshCache()
             setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnSyncedData)
         }
@@ -83,9 +91,24 @@ class MainViewModel @Inject constructor(
         programData = programRepository.programData
         facultyCourses = programRepository.facultyCourseData
         userProfile = userRepository.userProfile
+        timetableData = timetableRepository.timetableData
     }
 
     fun getCurrentSemester(): Semester {
         return programData.semesters.getOrElse(programData.currentSemester) { Semester() }
+    }
+
+    fun syncTimetable() {
+        viewModelScope.launch {
+            timetableRepository.refreshCache()
+            setGlobalData()
+        }
+    }
+
+    fun setLectureStatus(batchId: String, lectureId: String, status: LectureStatus) {
+        viewModelScope.launch {
+            timetableRepository.setLectureStatus(SetLectureInput(batchId, lectureId, status))
+            setGlobalData()
+        }
     }
 }

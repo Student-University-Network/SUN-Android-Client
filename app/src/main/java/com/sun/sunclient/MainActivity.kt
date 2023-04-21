@@ -36,6 +36,7 @@ import com.sun.sunclient.ui.screens.login.LoginScreen
 import com.sun.sunclient.ui.screens.profile.ProfileScreen
 import com.sun.sunclient.ui.shared.ErrorOverlay
 import com.sun.sunclient.ui.screens.splash.SplashScreen
+import com.sun.sunclient.ui.screens.timetable.TimetableScreen
 import com.sun.sunclient.ui.shared.TopBar
 import com.sun.sunclient.ui.theme.SUNTheme
 import com.sun.sunclient.utils.Screen
@@ -290,6 +291,11 @@ class MainActivity : ComponentActivity() {
                                                     popUpTo(Screen.HOME.route)
                                                 }
                                             },
+                                            onNavigateToTimetable = {
+                                                navController.navigate(Screen.TIMETABLE.route) {
+                                                    popUpTo(Screen.HOME.route)
+                                                }
+                                            },
                                             mainViewModel = mainViewModel
                                         )
                                     }
@@ -314,6 +320,9 @@ class MainActivity : ComponentActivity() {
                                             it.arguments?.getString("courseId") ?: "",
                                             mainViewModel = mainViewModel
                                         )
+                                    }
+                                    composable(Screen.TIMETABLE.route) {
+                                        TimetableScreen(mainViewModel = mainViewModel)
                                     }
                                     // TODO: add rest of routes
                                 }

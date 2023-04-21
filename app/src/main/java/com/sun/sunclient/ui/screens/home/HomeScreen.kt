@@ -29,6 +29,7 @@ import java.util.*
 fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToCourses: () -> Unit,
+    onNavigateToTimetable: () -> Unit,
     mainViewModel: MainViewModel
 ) {
 
@@ -83,7 +84,7 @@ fun HomeScreen(
                             }", fontSize = 14.sp
                         )
                     } else {
-                       Pill(label = "Faculty")
+                        Pill(label = "Faculty")
                     }
                 }
             }
@@ -98,7 +99,7 @@ fun HomeScreen(
             ServicesCard(
                 name = "Timetable",
                 icon = R.drawable.ic_timetable,
-                onServiceClick = { })
+                onServiceClick = { onNavigateToTimetable() })
         }
         item {
             ServicesCard(
