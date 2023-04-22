@@ -189,8 +189,8 @@ fun TimetableCard(
     var lectureStatus by remember { mutableStateOf(lecture.status) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
-    LaunchedEffect(key1 = lectureStatus) {
-        mainViewModel.setLectureStatus(lecture.batchId ?: "", lecture.id, lectureStatus)
+    fun onLectureStatusChange(newStatus: LectureStatus) {
+        mainViewModel.setLectureStatus(lecture.batchId ?: "", lecture.id, newStatus)
     }
 
     LaunchedEffect(key1 = isCurrentLecture) {
@@ -262,12 +262,14 @@ fun TimetableCard(
                                         onClick = {
                                             lectureStatus = LectureStatus.CANCELLED
                                             expanded = false
+                                            onLectureStatusChange(LectureStatus.CANCELLED)
                                         })
                                     DropdownMenuItem(
                                         text = { Text("Complete") },
                                         onClick = {
                                             lectureStatus = LectureStatus.COMPLETED
                                             expanded = false
+                                            onLectureStatusChange(LectureStatus.COMPLETED)
                                         })
                                 } else if (lecture.status == LectureStatus.CANCELLED) {
                                     DropdownMenuItem(
@@ -275,6 +277,7 @@ fun TimetableCard(
                                         onClick = {
                                             lectureStatus = LectureStatus.SCHEDULED
                                             expanded = false
+                                            onLectureStatusChange(LectureStatus.SCHEDULED)
                                         })
                                 }
                             }

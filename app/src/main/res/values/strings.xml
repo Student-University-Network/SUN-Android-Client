@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SUN</string>
+    <string name="default_notification_channel_id">sun_notification_channel</string>
 </resources>

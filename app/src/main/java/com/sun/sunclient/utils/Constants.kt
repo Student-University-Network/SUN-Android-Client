@@ -12,4 +12,7 @@ object Constants {
     const val STUDENT = "STUDENT"
     const val ADMIN = "ADMIN"
     const val FACULTY = "FACULTY"
+
+    // FirebaseService constants
+    const val FETCH_TIMETABLE = "FETCH_TIMETABLE"
 }

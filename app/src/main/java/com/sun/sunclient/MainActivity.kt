@@ -2,15 +2,16 @@ package com.sun.sunclient
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.os.Build
 import android.os.Bundle
+import android.Manifest
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -19,8 +20,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,7 +32,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.sun.sunclient.config.Config
+import com.sun.sunclient.network.AppNotificationService
 import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen
@@ -41,6 +50,7 @@ import com.sun.sunclient.ui.shared.TopBar
 import com.sun.sunclient.ui.theme.SUNTheme
 import com.sun.sunclient.utils.Screen
 import com.sun.sunclient.utils.AppEvent
+import com.sun.sunclient.utils.Constants
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +107,16 @@ class MainActivity : ComponentActivity() {
             }
 
             val state = rememberPullRefreshState(refreshing, ::refresh)
+
+            AppNotificationService.updateStatus.observe(this) {
+                when (it) {
+                    Constants.FETCH_TIMETABLE -> {
+                        mainViewModel.syncTimetable()
+                        AppNotificationService.updateStatus.value = ""
+                    }
+                    else -> {}
+                }
+            }
 
             fun navigateAndClearStack(screen: Screen) {
                 navController.navigate(screen.route) {
@@ -223,6 +243,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            MultiplePermissionsHandler()
             SUNTheme {
                 CompositionLocalProvider(LocalSnackbar provides snackbarHostState) {
                     Surface(
@@ -381,5 +402,67 @@ class MainActivity : ComponentActivity() {
             }
         }
         return false
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MultiplePermissionsHandler() {
+    val context = LocalContext.current
+    val permissionLists = ArrayList<String>()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        permissionLists.add(Manifest.permission.POST_NOTIFICATIONS)
+    }
+    val permissionStates = rememberMultiplePermissionsState(permissions = permissionLists)
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(key1 = lifecycleOwner, effect = {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    permissionStates.launchMultiplePermissionRequest()
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    })
+
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    )
+    {
+        permissionStates.permissions.forEach { it ->
+            when (it.permission) {
+                Manifest.permission.POST_NOTIFICATIONS -> {
+                    when {
+                        it.status.isGranted -> {
+                            // None
+                        }
+                        it.status.shouldShowRationale -> {
+                            // TODO : add rationale
+                            Toast.makeText(
+                                context,
+                                "Please allow Push notifications for this app",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        !it.status.isGranted && !it.status.shouldShowRationale -> {
+                            Toast.makeText(
+                                context,
+                                "Navigate to settings and enable the Storage permission",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
     }
 }

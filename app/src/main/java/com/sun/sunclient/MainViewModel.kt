@@ -106,6 +106,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun setLectureStatus(batchId: String, lectureId: String, status: LectureStatus) {
+        Log.d(TAG, "setLectureStatus: Sent")
         viewModelScope.launch {
             timetableRepository.setLectureStatus(SetLectureInput(batchId, lectureId, status))
             setGlobalData()
