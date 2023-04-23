@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.zIndex
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -32,12 +33,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.work.WorkManager
+import androidx.work.await
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.shouldShowRationale
 import com.sun.sunclient.config.Config
+import com.sun.sunclient.data.dataStore
 import com.sun.sunclient.network.AppNotificationService
+import com.sun.sunclient.network.background.DailySchedulerWorker
 import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen
@@ -57,6 +62,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.net.HttpURLConnection
@@ -170,9 +176,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            fun checkDailyScheduler() {
+                coroutineScope.launch {
+                    val works = WorkManager.getInstance(context).getWorkInfosByTag(Constants.DAILY_SCHEDULER_TAG).await()
+                    if (works.size == 0) {
+                        DailySchedulerWorker.addDailyScheduler(applicationContext, true)
+                    }
+                }
+            }
+
             LaunchedEffect(key1 = true) {
                 connectivityCheck()
                 mainViewModel.onStart()
+                checkDailyScheduler()
             }
 
             LaunchedEffect(key1 = true) {

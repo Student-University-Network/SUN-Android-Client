@@ -15,4 +15,17 @@ object Constants {
 
     // FirebaseService constants
     const val FETCH_TIMETABLE = "FETCH_TIMETABLE"
+
+    // workmanager constants
+    const val NOTIFICATION_CHANNEL = "MY_NOTIFICATION_CHANNEL_138"
+    const val UPCOMING_NOTIFICATION_ID = 23042002
+    const val LECTURE_SCHEDULE_TAG = "lecture-schedule-tag"
+    const val CURRENT_LECTURE_TAG = "current-lecture-tag"
+    const val DAILY_SCHEDULER_TAG = "daily-scheduler-tag"
+    const val DATA_COURSE_NAME_KEY = "DATA_COURSE_NAME_KEY"
+    const val DATA_PROFESSOR_NAME_KEY = "DATA_PROFESSOR_NAME_KEY"
+    const val DATA_ROOM_KEY = "DATA_ROOM_KEY"
+    const val DATA_STATUS_KEY = "DATA_STATUS_KEY"
+    const val DATA_TIME_TEXT_KEY = "DATA_TIME_TEXT_KEY"
+    const val DATA_TITLE_TEXT_KEY = "DATA_TITLE_TEXT_KEY"
 }
