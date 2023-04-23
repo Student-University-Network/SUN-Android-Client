@@ -2,7 +2,7 @@ package com.sun.sunclient.network.background
 
 import android.content.Context
 import android.util.Log
-import androidx.datastore.dataStore
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -13,15 +13,11 @@ import com.sun.sunclient.data.dataStore
 import com.sun.sunclient.network.schemas.Timetable
 import com.sun.sunclient.utils.Constants
 import com.sun.sunclient.utils.parseJson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.math.log
 
 class DailySchedulerWorker(context: Context, workerParams: WorkerParameters) :
     Worker(context, workerParams) {
@@ -33,7 +29,7 @@ class DailySchedulerWorker(context: Context, workerParams: WorkerParameters) :
                 preferences[stringPreferencesKey(Constants.TIMETABLE_KEY)] ?: ""
             }
             val dataString = dataStringFlow.first()
-            if (dataString != "") {
+            if (dataString != "{}" && dataString != "") {
                 val timetableData =
                     parseJson(dataString, TypeToken.get(Timetable::class.java)) ?: Timetable()
                 TimetableWorker.scheduleCurrentDayTimetable(applicationContext, timetableData)
@@ -67,6 +63,12 @@ class DailySchedulerWorker(context: Context, workerParams: WorkerParameters) :
                 .addTag(Constants.DAILY_SCHEDULER_TAG)
                 .build()
             WorkManager.getInstance(context).enqueue(workRequest)
+
+            runBlocking {
+                context.dataStore.edit { preferences ->
+                    preferences[stringPreferencesKey(Constants.IS_TIMETABLE_SCHEDULED)] = "SCHEDULED"
+                }
+            }
             Log.d(TAG, "addDailyScheduler: Enqueued daily scheduler")
         }
     }

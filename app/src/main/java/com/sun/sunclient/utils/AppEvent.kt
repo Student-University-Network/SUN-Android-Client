@@ -15,4 +15,5 @@ sealed class AppEvent {
     object OnLogin : AppEvent()
     object OnLogout : AppEvent()
     object OnSyncedData: AppEvent()
+    object ScheduleWorks: AppEvent()
 }

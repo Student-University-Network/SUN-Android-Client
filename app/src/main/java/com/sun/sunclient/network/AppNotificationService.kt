@@ -14,7 +14,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -48,10 +47,10 @@ class AppNotificationService : FirebaseMessagingService() {
         Log.d(TAG, "From: ${remoteMessage.from}, data: ${remoteMessage.data}")
         // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
-            updateStatus.postValue(Constants.FETCH_TIMETABLE)
             scope.launch {
                 authRepository.refresh()
                 timetableRepository.refreshCache()
+                updateStatus.postValue(Constants.FETCH_TIMETABLE)
                 TimetableWorker.scheduleCurrentDayTimetable(
                     applicationContext,
                     timetableRepository.timetableData

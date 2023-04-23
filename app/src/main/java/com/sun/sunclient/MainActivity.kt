@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.Manifest
+import android.app.NotificationManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -62,6 +63,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -178,17 +180,28 @@ class MainActivity : ComponentActivity() {
 
             fun checkDailyScheduler() {
                 coroutineScope.launch {
+                    val data = context.dataStore.data.map { preferences ->
+                        preferences[stringPreferencesKey(Constants.IS_TIMETABLE_SCHEDULED)]
+                    }
+                    val dataString = data.first()
                     val works = WorkManager.getInstance(context).getWorkInfosByTag(Constants.DAILY_SCHEDULER_TAG).await()
-                    if (works.size == 0) {
+                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    val activeNotifications = notificationManager.activeNotifications
+                    if (works.size == 0 || dataString == "" || activeNotifications.isEmpty()) {
                         DailySchedulerWorker.addDailyScheduler(applicationContext, true)
                     }
                 }
             }
 
+            fun clearAllWorks() {
+                WorkManager.getInstance(context).cancelAllWork()
+                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.cancelAll()
+            }
+
             LaunchedEffect(key1 = true) {
                 connectivityCheck()
                 mainViewModel.onStart()
-                checkDailyScheduler()
             }
 
             LaunchedEffect(key1 = true) {
@@ -199,6 +212,7 @@ class MainActivity : ComponentActivity() {
                         }
                         is AppEvent.OnLogout -> {
                             navigateAndClearStack(Screen.LOG_IN)
+                            clearAllWorks()
                         }
                         is AppEvent.PopBackStack -> {
                             navController.popBackStack()
@@ -228,6 +242,9 @@ class MainActivity : ComponentActivity() {
                         }
                         is AppEvent.OnSyncedData -> {
                             refreshing = false
+                        }
+                        is AppEvent.ScheduleWorks -> {
+                            checkDailyScheduler()
                         }
                     }
                 }

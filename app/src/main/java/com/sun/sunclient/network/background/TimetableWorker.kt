@@ -29,7 +29,8 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
         val room = inputData.getString(Constants.DATA_ROOM_KEY) ?: "Unknown"
         val status = inputData.getString(Constants.DATA_STATUS_KEY) ?: "Unknown"
         val timeText = inputData.getString(Constants.DATA_TIME_TEXT_KEY) ?: "Unknown"
-        val titleText = inputData.getString(Constants.DATA_TIME_TEXT_KEY) ?: "Unknown"
+        val titleText = inputData.getString(Constants.DATA_TITLE_TEXT_KEY) ?: "Unknown"
+        val startLectureDelay = inputData.getLong(Constants.DATA_START_DELAY_KEY, 0)
         Log.d(
             TAG,
             "Notification: course:$courseName, professor:$professorName, room:$room, status:$status"
@@ -47,7 +48,6 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                 "Timetable notifications",
                 NotificationManager.IMPORTANCE_HIGH
             )
-            // Configure the notification channel.
             notificationChannel.description = "Here notifications related to timetable are posted"
             notificationChannel.enableLights(true)
             notificationChannel.enableVibration(true)
@@ -68,14 +68,20 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
         notificationSmallLayout.setTextViewText(R.id.course_name, courseName)
         notificationSmallLayout.setTextViewText(R.id.time_text, timeText)
         notificationSmallLayout.setTextViewText(R.id.room_text, room)
-        notificationSmallLayout.setTextViewText(R.id.time_text, titleText)
+        notificationSmallLayout.setTextViewText(R.id.title_text, titleText)
         val notificationBigLayout =
             RemoteViews(context.packageName, R.layout.lecture_notification_big_layout)
         notificationBigLayout.setTextViewText(R.id.course_name, courseName)
         notificationBigLayout.setTextViewText(R.id.time_text, timeText)
         notificationBigLayout.setTextViewText(R.id.room_text, room)
         notificationBigLayout.setTextViewText(R.id.professor_text, professorName)
-        notificationBigLayout.setTextViewText(R.id.time_text, titleText)
+        notificationBigLayout.setTextViewText(R.id.title_text, titleText)
+
+        if (status == LectureStatus.CANCELLED.toString()) {
+            notificationSmallLayout.setTextViewText(R.id.title_text, "Lecture was cancelled")
+            notificationBigLayout.setTextViewText(R.id.title_text, "Lecture was cancelled")
+        }
+
         val notification = builder
             .setContentTitle(courseName)
             .setContentText("Upcoming Lecture !!")
@@ -86,17 +92,21 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
             .setOngoing(true)
             .build()
 
-        notificationManager.notify(Constants.UPCOMING_NOTIFICATION_ID, notification);
-        setCurrentLectureWork(
-            context,
-            courseName,
-            professorName,
-            room,
-            timeText,
-            status,
-            10 * 60 * 1000,
-            "Current lecture:"
-        )
+        notificationManager.notify(Constants.REMINDER_NOTIFICATION_CHANNEL_ID, notification);
+
+        // temporary solution
+        if (titleText == "Upcoming lecture..") {
+            setCurrentLectureWork(
+                context,
+                courseName,
+                professorName,
+                room,
+                timeText,
+                status,
+                startLectureDelay,
+                "Current lecture:"
+            )
+        }
         return Result.success()
     }
 
@@ -104,42 +114,72 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
         val TAG = "TimetableWorker"
 
         fun scheduleCurrentDayTimetable(context: Context, timetable: Timetable) {
-            // select todays week day
-            val todayDate = Calendar.getInstance()
-            // week day in index of 0
-            val weekDay = todayDate.get(Calendar.DAY_OF_WEEK) - 1
+            val todayDate = Calendar.getInstance()// select todays week day
+            val weekDay = todayDate.get(Calendar.DAY_OF_WEEK) - 1 // week day in index of 0
             val todaysLectures = timetable.days.find { d -> d.weekDay == weekDay }
 
             // remove old work requests
-            WorkManager.getInstance(context).cancelAllWorkByTag(Constants.LECTURE_SCHEDULE_TAG)
+            WorkManager.getInstance(context).cancelAllWorkByTag(Constants.UPCOMING_LECTURE_TAG)
+            WorkManager.getInstance(context).cancelAllWorkByTag(Constants.CURRENT_LECTURE_TAG)
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            Log.d(TAG, "scheduleCurrentDayTimetable: Cancel all ")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                notificationManager.deleteNotificationChannel(Constants.NOTIFICATION_CHANNEL)
+            } else {
+                notificationManager.cancelAll()
+            }
 
-            // calculate initial delay
-            val lectureDelays = ArrayList<LectureSchedule>()
+            // calculate all delays
+            val lecturesList = ArrayList<LectureSchedule>()
             todaysLectures?.let {
                 for (lecture in todaysLectures.lectures) {
                     val currentTimeMillis = System.currentTimeMillis()
                     val scheduledTime = Calendar.getInstance().apply {
                         this.set(Calendar.HOUR_OF_DAY, lecture.startTime.hour)
                         this.set(Calendar.MINUTE, lecture.startTime.minute)
+                        this.set(Calendar.SECOND, 0)
                     }
+                    val endTime = Calendar.getInstance().apply {
+                        this.set(Calendar.HOUR_OF_DAY, lecture.endTime.hour)
+                        this.set(Calendar.MINUTE, lecture.endTime.minute)
+                        this.set(Calendar.SECOND, 0)
+                    }
+
+                    var startDelay = scheduledTime.timeInMillis - currentTimeMillis
                     scheduledTime.add(Calendar.MINUTE, -10) // 10 minutes before
-                    val delay = scheduledTime.timeInMillis - currentTimeMillis
-                    lectureDelays.add(
+                    var reminderDelay = scheduledTime.timeInMillis - currentTimeMillis
+                    val endDelay = endTime.timeInMillis - currentTimeMillis
+
+                    if (reminderDelay >= 0) {
+                        // if its more than 10 mins before the lecture
+                        // do nothing
+                    } else if (startDelay >= 0) {
+                        // if its less than 10 min before lecture but not ongoing lecture
+                        reminderDelay = 0 // start reminder immediately
+                    } else if (endDelay >= 0 ) {
+                        // If lecture is already ongoing
+                        reminderDelay = 0 // start reminder immediately
+                        startDelay = 0 // start current lecture immediately
+                    }
+
+                    lecturesList.add(
                         LectureSchedule(
                             lecture.courseName,
                             lecture.professorName,
                             lecture.room,
-                            delay,
                             lecture.status,
-                            getLectureTimeString(lecture.startTime, lecture.endTime)
+                            getLectureTimeString(lecture.startTime, lecture.endTime),
+                            remindLectureDelay = reminderDelay,
+                            startLectureDelay = startDelay,
+                            endLectureDelay = endDelay
                         )
                     )
                 }
             }
             // set new work request
             val constraints = Constraints.Builder().build()
-            for (lecture in lectureDelays) {
-                if (lecture.delay >= 0) {
+            for (lecture in lecturesList) {
+                if (lecture.remindLectureDelay >= 0) {
                     val data = Data.Builder()
                         .putString(Constants.DATA_COURSE_NAME_KEY, lecture.courseName)
                         .putString(Constants.DATA_PROFESSOR_NAME_KEY, lecture.professorName)
@@ -147,10 +187,11 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                         .putString(Constants.DATA_STATUS_KEY, lecture.status.toString())
                         .putString(Constants.DATA_TIME_TEXT_KEY, lecture.timeText)
                         .putString(Constants.DATA_TITLE_TEXT_KEY, "Upcoming lecture..")
+                        .putLong(Constants.DATA_START_DELAY_KEY, lecture.startLectureDelay)
                         .build()
                     val workRequest = OneTimeWorkRequestBuilder<TimetableWorker>()
-                        .setInitialDelay(lecture.delay, TimeUnit.MILLISECONDS)
-                        .addTag(Constants.LECTURE_SCHEDULE_TAG)
+                        .setInitialDelay(lecture.remindLectureDelay, TimeUnit.MILLISECONDS)
+                        .addTag(Constants.UPCOMING_LECTURE_TAG)
                         .setInputData(data)
                         .setConstraints(constraints)
                         .build()
@@ -167,7 +208,7 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
             room: String,
             timeText: String,
             status: String,
-            delay: Long,
+            startLectureDelay: Long,
             titleText: String
         ) {
             WorkManager.getInstance(context).cancelAllWorkByTag(Constants.CURRENT_LECTURE_TAG)
@@ -180,12 +221,12 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                 .putString(Constants.DATA_TITLE_TEXT_KEY, titleText)
                 .build()
             val workRequest = OneTimeWorkRequestBuilder<TimetableWorker>()
-                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInitialDelay(startLectureDelay, TimeUnit.MILLISECONDS)
                 .addTag(Constants.CURRENT_LECTURE_TAG)
                 .setInputData(data)
                 .build()
             WorkManager.getInstance(context).enqueue(workRequest)
-            Log.d(TAG, "setCurrentLectureWork: Scheduled: $courseName time: $delay")
+            Log.d(TAG, "setCurrentLectureWork: Scheduled: $courseName time: $startLectureDelay")
         }
     }
 }
@@ -194,7 +235,9 @@ data class LectureSchedule(
     val courseName: String,
     val professorName: String,
     val room: String,
-    val delay: Long,
     val status: LectureStatus,
-    val timeText: String
+    val timeText: String,
+    val remindLectureDelay: Long,
+    val startLectureDelay: Long,
+    val endLectureDelay: Long
 )

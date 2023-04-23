@@ -83,6 +83,7 @@ class MainViewModel @Inject constructor(
             timetableRepository.refreshCache()
             setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnSyncedData)
+            MyEvents.eventFlow.send(AppEvent.ScheduleWorks)
         }
     }
 

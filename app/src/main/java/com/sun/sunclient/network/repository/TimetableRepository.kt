@@ -38,6 +38,7 @@ class TimetableRepository @Inject constructor(
         userData = LoginResponse.UserDetails()
         dataStore.saveString(Constants.TIMETABLE_KEY, "{}")
         dataStore.saveString(Constants.USER_DETAILS_KEY, "{}")
+        dataStore.saveString(Constants.IS_TIMETABLE_SCHEDULED, "")
     }
 
     private suspend fun readStoredData() {
