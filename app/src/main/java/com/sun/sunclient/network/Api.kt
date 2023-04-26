@@ -5,14 +5,8 @@ import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.sun.sunclient.config.Config
 import com.sun.sunclient.data.AppDataStore
-import com.sun.sunclient.network.repository.AuthRepository
-import com.sun.sunclient.network.repository.ProgramRepository
-import com.sun.sunclient.network.repository.TimetableRepository
-import com.sun.sunclient.network.repository.UserRepository
-import com.sun.sunclient.network.service.AuthApiService
-import com.sun.sunclient.network.service.ProgramApiService
-import com.sun.sunclient.network.service.TimetableApiService
-import com.sun.sunclient.network.service.UserApiService
+import com.sun.sunclient.network.repository.*
+import com.sun.sunclient.network.service.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -107,5 +101,20 @@ object AppApi {
         dataStore: AppDataStore
     ): TimetableRepository {
         return TimetableRepository(api, dataStore)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAttendanceService(retrofit: Retrofit): AttendanceApiService {
+        return retrofit.create(AttendanceApiService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAttendanceRepository(
+        api: AttendanceApiService,
+        dataStore: AppDataStore
+    ): AttendanceRepository {
+        return AttendanceRepository(api, dataStore)
     }
 }

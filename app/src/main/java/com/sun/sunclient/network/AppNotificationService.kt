@@ -14,6 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,6 +40,7 @@ class AppNotificationService : FirebaseMessagingService() {
                 return@OnCompleteListener
             }
             val token = task.result
+            scope.launch { timetableRepository.setFirebaseToken(token) }
             Log.d(TAG, "Token is $token")
         })
     }
@@ -65,6 +67,7 @@ class AppNotificationService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
+        scope.launch { timetableRepository.setFirebaseToken(token) }
         Log.d(TAG, "Refreshed token: $token")
     }
 }

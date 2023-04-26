@@ -94,4 +94,12 @@ class TimetableRepository @Inject constructor(
             SetLectureStatusResponse("failed");
         }
     }
+
+    suspend fun setFirebaseToken(token: String) {
+        try {
+            api.setFirebaseToken(SetFireBaseTokenInput(token))
+        } catch (e: Exception) {
+            Log.e(TAG, "SetLectureStatus: $e")
+        }
+    }
 }

@@ -184,8 +184,10 @@ class MainActivity : ComponentActivity() {
                         preferences[stringPreferencesKey(Constants.IS_TIMETABLE_SCHEDULED)]
                     }
                     val dataString = data.first()
-                    val works = WorkManager.getInstance(context).getWorkInfosByTag(Constants.DAILY_SCHEDULER_TAG).await()
-                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    val works = WorkManager.getInstance(context)
+                        .getWorkInfosByTag(Constants.DAILY_SCHEDULER_TAG).await()
+                    val notificationManager =
+                        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     val activeNotifications = notificationManager.activeNotifications
                     if (works.size == 0 || dataString == "" || activeNotifications.isEmpty()) {
                         DailySchedulerWorker.addDailyScheduler(applicationContext, true)
@@ -195,7 +197,8 @@ class MainActivity : ComponentActivity() {
 
             fun clearAllWorks() {
                 WorkManager.getInstance(context).cancelAllWork()
-                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val notificationManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.cancelAll()
             }
 
@@ -443,6 +446,14 @@ class MainActivity : ComponentActivity() {
 fun MultiplePermissionsHandler() {
     val context = LocalContext.current
     val permissionLists = ArrayList<String>()
+    permissionLists.add(Manifest.permission.BLUETOOTH)
+    permissionLists.add(Manifest.permission.BLUETOOTH_ADMIN)
+    permissionLists.add(Manifest.permission.ACCESS_FINE_LOCATION)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        permissionLists.add(Manifest.permission.BLUETOOTH_SCAN)
+        permissionLists.add(Manifest.permission.BLUETOOTH_CONNECT)
+        permissionLists.add(Manifest.permission.BLUETOOTH_ADVERTISE)
+    }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         permissionLists.add(Manifest.permission.POST_NOTIFICATIONS)
     }

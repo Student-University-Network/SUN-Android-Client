@@ -7,19 +7,25 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.work.WorkManager
 import com.sun.sunclient.R
 import com.sun.sunclient.MainViewModel
+import com.sun.sunclient.network.background.AttendanceWorker
+import com.sun.sunclient.network.schemas.Lecture
+import com.sun.sunclient.ui.screens.timetable.getLectureTimeString
+import com.sun.sunclient.utils.Constants
 import com.sun.sunclient.utils.Constants.ADMIN
 import com.sun.sunclient.utils.Constants.STUDENT
 import java.text.SimpleDateFormat
@@ -32,6 +38,42 @@ fun HomeScreen(
     onNavigateToTimetable: () -> Unit,
     mainViewModel: MainViewModel
 ) {
+
+    val context = LocalContext.current
+    val role = mainViewModel.userData.role
+    var currentLecture by remember { mutableStateOf<Lecture?>(null) }
+
+    fun doAttendance() {
+        currentLecture?.let {
+            AttendanceWorker.takeALectureAttendance(context, it.id, it.courseId, role)
+        }
+    }
+
+    LaunchedEffect(key1 = true) {
+        val timetable = mainViewModel.timetableData
+        val today = timetable.days.find { d ->
+            d.weekDay == (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1)
+        }
+        today?.let { d ->
+            val currentTime = System.currentTimeMillis()
+            for (l in d.lectures) {
+                val startTime = Calendar.getInstance().apply {
+                    this.set(Calendar.HOUR_OF_DAY, l.startTime.hour)
+                    this.set(Calendar.MINUTE, l.startTime.minute)
+                    this.set(Calendar.SECOND, 0)
+                }.timeInMillis
+                val endTime = Calendar.getInstance().apply {
+                    this.set(Calendar.HOUR_OF_DAY, l.endTime.hour)
+                    this.set(Calendar.MINUTE, l.endTime.minute)
+                    this.set(Calendar.SECOND, 0)
+                }.timeInMillis
+                if (currentTime in startTime until endTime) {
+                    currentLecture = l
+                    return@LaunchedEffect
+                }
+            }
+        }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -89,6 +131,60 @@ fun HomeScreen(
                 }
             }
         }
+        item(span = { GridItemSpan(2) }) {
+            Card(
+                elevation = CardDefaults.cardElevation(4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    currentLecture?.let { lecture ->
+                        Text("Current lecture")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                lecture.courseName,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            OutlinedButton(onClick = { doAttendance() }) {
+                                if (role == Constants.FACULTY) {
+                                    Text("Take attendance")
+                                } else {
+                                    Text("Mark attendance")
+                                }
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_time),
+                                contentDescription = "Clock icon",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+                            )
+                            Text(getLectureTimeString(lecture.startTime, lecture.endTime))
+                        }
+                    }
+                    if (currentLecture == null) {
+                        Text("No ongoing lecture", fontSize = 14.sp)
+                    }
+                }
+            }
+        }
         item {
             ServicesCard(
                 name = "Courses",
@@ -105,12 +201,6 @@ fun HomeScreen(
             ServicesCard(
                 name = "Attendance",
                 icon = R.drawable.ic_attendance,
-                onServiceClick = { })
-        }
-        item {
-            ServicesCard(
-                name = "Chat",
-                icon = R.drawable.ic_chat,
                 onServiceClick = { })
         }
         item {
@@ -157,22 +247,22 @@ fun ServicesCard(
                 )
                 Text(name, fontSize = 16.sp)
             }
-            Box(
-                modifier = Modifier
-                    .padding(4.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(50)
-                    )
-                    .padding(vertical = 2.dp, horizontal = 8.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                Text(
-                    "2",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
+//            Box(
+//                modifier = Modifier
+//                    .padding(4.dp)
+//                    .background(
+//                        MaterialTheme.colorScheme.primary,
+//                        shape = RoundedCornerShape(50)
+//                    )
+//                    .padding(vertical = 2.dp, horizontal = 8.dp)
+//                    .align(Alignment.TopEnd)
+//            ) {
+//                Text(
+//                    "2",
+//                    fontSize = 14.sp,
+//                    color = MaterialTheme.colorScheme.onPrimary
+//                )
+//            }
         }
     }
 }

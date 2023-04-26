@@ -1,5 +1,6 @@
 package com.sun.sunclient.ui.screens.timetable
 
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -33,14 +34,22 @@ import com.sun.sunclient.ui.screens.course.TabItem
 import com.sun.sunclient.ui.theme.errorColor
 import com.sun.sunclient.ui.theme.successColor
 import com.sun.sunclient.utils.Constants
+import java.util.*
+import kotlin.collections.ArrayList
 
 @Composable
 fun TimetableScreen(
     mainViewModel: MainViewModel
 ) {
-    var currentTab by remember { mutableStateOf(0) }
+    var currentTab by remember {
+        mutableStateOf(
+            Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1
+        )
+    }
     val tabItems = WeekDay.values().map() { day -> TabItem(day.toString()) }
-    var selectedDay by remember { mutableStateOf(WeekDay.Sunday) }
+    var selectedDay by remember {
+        mutableStateOf(WeekDay.values().find { it.dayOfWeek == currentTab } ?: WeekDay.Sunday)
+    }
 
     val timetable = mainViewModel.timetableData
 
@@ -207,9 +216,9 @@ fun TimetableCard(
             modifier = Modifier
                 .fillMaxSize()
                 .then(
-                    if (lecture.status == LectureStatus.CANCELLED) Modifier.background(
-                        MaterialTheme.colorScheme.surfaceVariant
-                    ) else Modifier.background(MaterialTheme.colorScheme.surface)
+                    if (lecture.status == LectureStatus.SCHEDULED) Modifier.background(
+                        MaterialTheme.colorScheme.surface
+                    ) else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
                 )
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {

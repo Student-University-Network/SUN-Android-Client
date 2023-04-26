@@ -5,6 +5,10 @@ data class GetTimetableResponse(
     val data: Timetable? = null
 )
 
+data class SetFireBaseTokenInput(
+    val token: String
+)
+
 data class Timetable(
     val batchId: String = "",
     val batchName: String = "",

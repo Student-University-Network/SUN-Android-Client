@@ -17,7 +17,22 @@ import com.sun.sunclient.ui.screens.timetable.getLectureTimeString
 import com.sun.sunclient.utils.Constants
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
+
+class CancelAllWorker(context: Context, workerParams: WorkerParameters) :
+    Worker(context, workerParams) {
+    override fun doWork(): Result {
+        val context = applicationContext
+        Log.d("CancelAllWorker", "doWork: Cancel all ")
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.deleteNotificationChannel(Constants.REMINDER_NOTIFICATION_CHANNEL)
+        } else {
+            notificationManager.cancelAll()
+        }
+        return Result.success()
+    }
+}
 
 class TimetableWorker(context: Context, workerParams: WorkerParameters) :
     Worker(context, workerParams) {
@@ -28,9 +43,13 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
         val professorName = inputData.getString(Constants.DATA_PROFESSOR_NAME_KEY) ?: "Unknown"
         val room = inputData.getString(Constants.DATA_ROOM_KEY) ?: "Unknown"
         val status = inputData.getString(Constants.DATA_STATUS_KEY) ?: "Unknown"
+        val role = inputData.getString(Constants.DATA_ROLE_KEY) ?: Constants.STUDENT
         val timeText = inputData.getString(Constants.DATA_TIME_TEXT_KEY) ?: "Unknown"
-        val titleText = inputData.getString(Constants.DATA_TITLE_TEXT_KEY) ?: "Unknown"
+        val titleText = inputData.getString(Constants.DATA_TITLE_TEXT_KEY) ?: "Lecture:"
+        val courseId = inputData.getString(Constants.DATA_COURSE_ID_KEY) ?: ""
+        val lectureId = inputData.getString(Constants.DATA_LECTURE_ID_KEY) ?: ""
         val startLectureDelay = inputData.getLong(Constants.DATA_START_DELAY_KEY, 0)
+        val attendanceDelay = inputData.getLong(Constants.DATA_ATTEND_DELAY_KEY, 0)
         Log.d(
             TAG,
             "Notification: course:$courseName, professor:$professorName, room:$room, status:$status"
@@ -44,7 +63,7 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .setUsage(AudioAttributes.USAGE_ALARM).build()
             val notificationChannel = NotificationChannel(
-                Constants.NOTIFICATION_CHANNEL,
+                Constants.REMINDER_NOTIFICATION_CHANNEL,
                 "Timetable notifications",
                 NotificationManager.IMPORTANCE_HIGH
             )
@@ -58,7 +77,7 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
             notificationManager.createNotificationChannel(notificationChannel)
         }
         val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(context, Constants.NOTIFICATION_CHANNEL)
+            Notification.Builder(context, Constants.REMINDER_NOTIFICATION_CHANNEL)
         } else {
             Notification.Builder(context)
         }
@@ -97,15 +116,21 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
         // temporary solution
         if (titleText == "Upcoming lecture..") {
             setCurrentLectureWork(
-                context,
-                courseName,
-                professorName,
-                room,
-                timeText,
-                status,
-                startLectureDelay,
-                "Current lecture:"
+                context = context,
+                courseName = courseName,
+                professorName = professorName,
+                room = room,
+                timeText = timeText,
+                status = status,
+                startLectureDelay = startLectureDelay,
+                role = role,
+                titleText = "Current lecture:",
+                lectureId = lectureId,
+                courseId = courseId,
+                attendanceDelay = attendanceDelay
             )
+        } else { // if its current lecture
+            AttendanceWorker.scheduleAttendance(context, courseId, lectureId, role, attendanceDelay)
         }
         return Result.success()
     }
@@ -121,16 +146,46 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
             // remove old work requests
             WorkManager.getInstance(context).cancelAllWorkByTag(Constants.UPCOMING_LECTURE_TAG)
             WorkManager.getInstance(context).cancelAllWorkByTag(Constants.CURRENT_LECTURE_TAG)
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+
+            todaysLectures?.let { day ->
+                var lastLectureDelay = todayDate.timeInMillis
+                if (day.lectures.isEmpty()) return
+                var lastLecture = day.lectures.first()
+                val currentTimeMillis = System.currentTimeMillis()
+                day.lectures.forEach {
+                    val endTime = Calendar.getInstance().apply {
+                        this.set(Calendar.HOUR_OF_DAY, it.endTime.hour)
+                        this.set(Calendar.MINUTE, it.endTime.minute)
+                        this.set(Calendar.SECOND, 0)
+                    }
+                    val endDelay = endTime.timeInMillis - currentTimeMillis
+                    if (endDelay >= lastLectureDelay) {
+                        lastLectureDelay = endDelay
+                        lastLecture = it
+                    }
+                }
+                Log.d(
+                    DailySchedulerWorker.TAG,
+                    "doWork: lastLecture $lastLecture, delay: $lastLectureDelay"
+                )
+                val workRequest = OneTimeWorkRequestBuilder<CancelAllWorker>()
+                    .setInitialDelay(lastLectureDelay, TimeUnit.MILLISECONDS)
+                    .addTag("CANCEL_ALL_WORK")
+                    .build()
+                WorkManager.getInstance(context).enqueue(workRequest)
+            }
+
             Log.d(TAG, "scheduleCurrentDayTimetable: Cancel all ")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                notificationManager.deleteNotificationChannel(Constants.NOTIFICATION_CHANNEL)
+                notificationManager.deleteNotificationChannel(Constants.REMINDER_NOTIFICATION_CHANNEL)
             } else {
                 notificationManager.cancelAll()
             }
 
             // calculate all delays
-            val lecturesList = ArrayList<LectureSchedule>()
             todaysLectures?.let {
                 for (lecture in todaysLectures.lectures) {
                     val currentTimeMillis = System.currentTimeMillis()
@@ -149,6 +204,8 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                     scheduledTime.add(Calendar.MINUTE, -10) // 10 minutes before
                     var reminderDelay = scheduledTime.timeInMillis - currentTimeMillis
                     val endDelay = endTime.timeInMillis - currentTimeMillis
+                    endTime.add(Calendar.MINUTE, -10)
+                    var attendanceDelay = endTime.timeInMillis - currentTimeMillis
 
                     if (reminderDelay >= 0) {
                         // if its more than 10 mins before the lecture
@@ -156,47 +213,44 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                     } else if (startDelay >= 0) {
                         // if its less than 10 min before lecture but not ongoing lecture
                         reminderDelay = 0 // start reminder immediately
-                    } else if (endDelay >= 0 ) {
+                    } else if (attendanceDelay >= 0) {
                         // If lecture is already ongoing
                         reminderDelay = 0 // start reminder immediately
                         startDelay = 0 // start current lecture immediately
+                    } else if (endDelay >= 0) {
+                        // If lecture is already ongoing and its time for attendance
+                        reminderDelay = 0 // start reminder immediately
+                        startDelay = 0 // start current lecture immediately
+                        attendanceDelay = 0 // start attendance immediately
                     }
+                    val role = if (lecture.batchId != null) Constants.FACULTY else Constants.STUDENT
 
-                    lecturesList.add(
-                        LectureSchedule(
-                            lecture.courseName,
-                            lecture.professorName,
-                            lecture.room,
-                            lecture.status,
-                            getLectureTimeString(lecture.startTime, lecture.endTime),
-                            remindLectureDelay = reminderDelay,
-                            startLectureDelay = startDelay,
-                            endLectureDelay = endDelay
-                        )
-                    )
-                }
-            }
-            // set new work request
-            val constraints = Constraints.Builder().build()
-            for (lecture in lecturesList) {
-                if (lecture.remindLectureDelay >= 0) {
-                    val data = Data.Builder()
-                        .putString(Constants.DATA_COURSE_NAME_KEY, lecture.courseName)
-                        .putString(Constants.DATA_PROFESSOR_NAME_KEY, lecture.professorName)
-                        .putString(Constants.DATA_ROOM_KEY, lecture.room)
-                        .putString(Constants.DATA_STATUS_KEY, lecture.status.toString())
-                        .putString(Constants.DATA_TIME_TEXT_KEY, lecture.timeText)
-                        .putString(Constants.DATA_TITLE_TEXT_KEY, "Upcoming lecture..")
-                        .putLong(Constants.DATA_START_DELAY_KEY, lecture.startLectureDelay)
-                        .build()
-                    val workRequest = OneTimeWorkRequestBuilder<TimetableWorker>()
-                        .setInitialDelay(lecture.remindLectureDelay, TimeUnit.MILLISECONDS)
-                        .addTag(Constants.UPCOMING_LECTURE_TAG)
-                        .setInputData(data)
-                        .setConstraints(constraints)
-                        .build()
-                    WorkManager.getInstance(context).enqueue(workRequest)
-                    Log.d(TAG, "scheduleCurrentDayTimetable: Scheduled: $lecture")
+                    // set new work request
+                    if (reminderDelay >= 0) {
+                        val data = Data.Builder()
+                            .putString(Constants.DATA_COURSE_NAME_KEY, lecture.courseName)
+                            .putString(Constants.DATA_PROFESSOR_NAME_KEY, lecture.professorName)
+                            .putString(Constants.DATA_ROOM_KEY, lecture.room)
+                            .putString(Constants.DATA_STATUS_KEY, lecture.status.toString())
+                            .putString(
+                                Constants.DATA_TIME_TEXT_KEY,
+                                getLectureTimeString(lecture.startTime, lecture.endTime)
+                            )
+                            .putString(Constants.DATA_TITLE_TEXT_KEY, "Upcoming lecture..")
+                            .putString(Constants.DATA_ROLE_KEY, role)
+                            .putString(Constants.DATA_LECTURE_ID_KEY, lecture.id)
+                            .putString(Constants.DATA_COURSE_ID_KEY, lecture.courseId)
+                            .putLong(Constants.DATA_START_DELAY_KEY, startDelay)
+                            .putLong(Constants.DATA_ATTEND_DELAY_KEY, attendanceDelay)
+                            .build()
+                        val workRequest = OneTimeWorkRequestBuilder<TimetableWorker>()
+                            .setInitialDelay(reminderDelay, TimeUnit.MILLISECONDS)
+                            .addTag(Constants.UPCOMING_LECTURE_TAG)
+                            .setInputData(data)
+                            .build()
+                        WorkManager.getInstance(context).enqueue(workRequest)
+                        Log.d(TAG, "scheduleCurrentDayTimetable: Scheduled: $lecture")
+                    }
                 }
             }
         }
@@ -208,8 +262,12 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
             room: String,
             timeText: String,
             status: String,
+            role: String,
             startLectureDelay: Long,
-            titleText: String
+            attendanceDelay: Long,
+            titleText: String,
+            lectureId: String,
+            courseId: String
         ) {
             WorkManager.getInstance(context).cancelAllWorkByTag(Constants.CURRENT_LECTURE_TAG)
             val data = Data.Builder()
@@ -219,6 +277,10 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                 .putString(Constants.DATA_STATUS_KEY, status)
                 .putString(Constants.DATA_TIME_TEXT_KEY, timeText)
                 .putString(Constants.DATA_TITLE_TEXT_KEY, titleText)
+                .putString(Constants.DATA_ROLE_KEY, role)
+                .putString(Constants.DATA_LECTURE_ID_KEY, lectureId)
+                .putString(Constants.DATA_COURSE_ID_KEY, courseId)
+                .putLong(Constants.DATA_ATTEND_DELAY_KEY, attendanceDelay)
                 .build()
             val workRequest = OneTimeWorkRequestBuilder<TimetableWorker>()
                 .setInitialDelay(startLectureDelay, TimeUnit.MILLISECONDS)
@@ -231,13 +293,4 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
     }
 }
 
-data class LectureSchedule(
-    val courseName: String,
-    val professorName: String,
-    val room: String,
-    val status: LectureStatus,
-    val timeText: String,
-    val remindLectureDelay: Long,
-    val startLectureDelay: Long,
-    val endLectureDelay: Long
-)
+
