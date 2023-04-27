@@ -44,6 +44,7 @@ import com.sun.sunclient.config.Config
 import com.sun.sunclient.data.dataStore
 import com.sun.sunclient.network.AppNotificationService
 import com.sun.sunclient.network.background.DailySchedulerWorker
+import com.sun.sunclient.ui.screens.announcements.AnnouncementScreen
 import com.sun.sunclient.ui.screens.attendance.AttendanceScreen
 import com.sun.sunclient.ui.screens.attendance.FacultyAttendanceCoursePage
 import com.sun.sunclient.ui.screens.course.CoursePage
@@ -360,6 +361,11 @@ class MainActivity : ComponentActivity() {
                                                     popUpTo(Screen.HOME.route)
                                                 }
                                             },
+                                            onNavigateToAnnouncements = {
+                                                navController.navigate(Screen.ANNOUCEMENTS.route) {
+                                                    popUpTo(Screen.HOME.route)
+                                                }
+                                            },
                                             mainViewModel = mainViewModel
                                         )
                                     }
@@ -404,18 +410,13 @@ class MainActivity : ComponentActivity() {
                                             navArgument("courseId") { type = NavType.StringType }
                                         ),
                                     ) {
-                                        Log.d(
-                                            TAG,
-                                            "onCreate: ${it.arguments?.getString("courseId") ?: "no"}, ${
-                                                it.arguments?.getString(
-                                                    "batchId"
-                                                ) ?: "nop"
-                                            }"
-                                        )
                                         FacultyAttendanceCoursePage(
                                             it.arguments?.getString("courseId") ?: "",
                                             it.arguments?.getString("batchId") ?: "",
                                         )
+                                    }
+                                    composable(Screen.ANNOUCEMENTS.route) {
+                                        AnnouncementScreen(mainViewModel = mainViewModel)
                                     }
                                     // TODO: add rest of routes
                                 }

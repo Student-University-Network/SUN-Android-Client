@@ -25,6 +25,7 @@ class MainViewModel @Inject constructor(
     private val programRepository: ProgramRepository,
     private val timetableRepository: TimetableRepository,
     private val attendanceRepository: AttendanceRepository,
+    private val announcementRepository: AnnouncementRepository,
     private val dataStore: AppDataStore,
 ) : ViewModel() {
 
@@ -70,6 +71,7 @@ class MainViewModel @Inject constructor(
             programRepository.reset()
             timetableRepository.reset()
             attendanceRepository.reset()
+            announcementRepository.reset()
             setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnLogout)
         }

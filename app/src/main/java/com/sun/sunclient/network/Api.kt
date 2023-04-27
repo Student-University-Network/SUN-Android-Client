@@ -117,4 +117,19 @@ object AppApi {
     ): AttendanceRepository {
         return AttendanceRepository(api, dataStore)
     }
+
+    @Singleton
+    @Provides
+    fun proviedAnnouncementService(retrofit: Retrofit): AnnouncementsApiService {
+        return retrofit.create(AnnouncementsApiService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAnnouncementRepository(
+        api: AnnouncementsApiService,
+        dataStore: AppDataStore
+    ): AnnouncementRepository {
+        return AnnouncementRepository(api, dataStore)
+    }
 }

@@ -37,6 +37,7 @@ fun HomeScreen(
     onNavigateToCourses: () -> Unit,
     onNavigateToTimetable: () -> Unit,
     onNavigateToAttendance: () -> Unit,
+    onNavigateToAnnouncements: () -> Unit,
     mainViewModel: MainViewModel
 ) {
 
@@ -208,7 +209,7 @@ fun HomeScreen(
             ServicesCard(
                 name = "Notices",
                 icon = R.drawable.ic_bell,
-                onServiceClick = { })
+                onServiceClick = { onNavigateToAnnouncements() })
         }
     }
 }
