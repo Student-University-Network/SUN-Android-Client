@@ -7,10 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sun.sunclient.data.AppDataStore
-import com.sun.sunclient.network.repository.AuthRepository
-import com.sun.sunclient.network.repository.ProgramRepository
-import com.sun.sunclient.network.repository.TimetableRepository
-import com.sun.sunclient.network.repository.UserRepository
+import com.sun.sunclient.network.repository.*
 import com.sun.sunclient.network.schemas.LectureStatus
 import com.sun.sunclient.network.schemas.Semester
 import com.sun.sunclient.network.schemas.SetLectureInput
@@ -27,6 +24,7 @@ class MainViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val programRepository: ProgramRepository,
     private val timetableRepository: TimetableRepository,
+    private val attendanceRepository: AttendanceRepository,
     private val dataStore: AppDataStore,
 ) : ViewModel() {
 
@@ -71,6 +69,7 @@ class MainViewModel @Inject constructor(
             authRepository.logout()
             programRepository.reset()
             timetableRepository.reset()
+            attendanceRepository.reset()
             setGlobalData()
             MyEvents.eventFlow.send(AppEvent.OnLogout)
         }

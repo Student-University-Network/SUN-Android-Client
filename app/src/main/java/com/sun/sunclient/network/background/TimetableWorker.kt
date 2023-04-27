@@ -149,7 +149,6 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-
             todaysLectures?.let { day ->
                 var lastLectureDelay = todayDate.timeInMillis
                 if (day.lectures.isEmpty()) return
@@ -162,15 +161,13 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                         this.set(Calendar.SECOND, 0)
                     }
                     val endDelay = endTime.timeInMillis - currentTimeMillis
-                    if (endDelay >= lastLectureDelay) {
+                    if (endDelay >= 0) {
                         lastLectureDelay = endDelay
                         lastLecture = it
+                    } else {
+                        lastLectureDelay = 0
                     }
                 }
-                Log.d(
-                    DailySchedulerWorker.TAG,
-                    "doWork: lastLecture $lastLecture, delay: $lastLectureDelay"
-                )
                 val workRequest = OneTimeWorkRequestBuilder<CancelAllWorker>()
                     .setInitialDelay(lastLectureDelay, TimeUnit.MILLISECONDS)
                     .addTag("CANCEL_ALL_WORK")
@@ -178,7 +175,6 @@ class TimetableWorker(context: Context, workerParams: WorkerParameters) :
                 WorkManager.getInstance(context).enqueue(workRequest)
             }
 
-            Log.d(TAG, "scheduleCurrentDayTimetable: Cancel all ")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 notificationManager.deleteNotificationChannel(Constants.REMINDER_NOTIFICATION_CHANNEL)
             } else {

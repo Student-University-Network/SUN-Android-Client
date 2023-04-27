@@ -61,4 +61,6 @@ data class FacultyCourse(
     val semesterName: String = "",
     val programId: String = "",
     val programName: String = "",
+    val batchId: String = "",
+    val batchName: String = ""
 )

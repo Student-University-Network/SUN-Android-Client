@@ -44,6 +44,8 @@ import com.sun.sunclient.config.Config
 import com.sun.sunclient.data.dataStore
 import com.sun.sunclient.network.AppNotificationService
 import com.sun.sunclient.network.background.DailySchedulerWorker
+import com.sun.sunclient.ui.screens.attendance.AttendanceScreen
+import com.sun.sunclient.ui.screens.attendance.FacultyAttendanceCoursePage
 import com.sun.sunclient.ui.screens.course.CoursePage
 import com.sun.sunclient.ui.screens.course.CoursesScreen
 import com.sun.sunclient.ui.screens.home.HomeScreen
@@ -353,6 +355,11 @@ class MainActivity : ComponentActivity() {
                                                     popUpTo(Screen.HOME.route)
                                                 }
                                             },
+                                            onNavigateToAttendance = {
+                                                navController.navigate(Screen.ATTENDANCE.route) {
+                                                    popUpTo(Screen.HOME.route)
+                                                }
+                                            },
                                             mainViewModel = mainViewModel
                                         )
                                     }
@@ -380,6 +387,35 @@ class MainActivity : ComponentActivity() {
                                     }
                                     composable(Screen.TIMETABLE.route) {
                                         TimetableScreen(mainViewModel = mainViewModel)
+                                    }
+                                    composable(Screen.ATTENDANCE.route) {
+                                        AttendanceScreen(
+                                            mainViewModel = mainViewModel,
+                                            navigateInScreen = { route ->
+                                                navController.navigate(route) {
+                                                    launchSingleTop = true
+                                                }
+                                            })
+                                    }
+                                    composable(
+                                        "${Screen.ATTENDANCE.route}/{batchId}/{courseId}",
+                                        arguments = listOf(
+                                            navArgument("batchId") { type = NavType.StringType },
+                                            navArgument("courseId") { type = NavType.StringType }
+                                        ),
+                                    ) {
+                                        Log.d(
+                                            TAG,
+                                            "onCreate: ${it.arguments?.getString("courseId") ?: "no"}, ${
+                                                it.arguments?.getString(
+                                                    "batchId"
+                                                ) ?: "nop"
+                                            }"
+                                        )
+                                        FacultyAttendanceCoursePage(
+                                            it.arguments?.getString("courseId") ?: "",
+                                            it.arguments?.getString("batchId") ?: "",
+                                        )
                                     }
                                     // TODO: add rest of routes
                                 }

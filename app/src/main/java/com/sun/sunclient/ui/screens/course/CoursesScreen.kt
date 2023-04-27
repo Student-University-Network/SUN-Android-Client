@@ -148,12 +148,24 @@ fun FacultyCourseCard(
                     fontWeight = FontWeight.Light,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    courseData.semesterName,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Light,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        courseData.batchName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Light,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text("|")
+                    Text(
+                        courseData.semesterName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Light,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

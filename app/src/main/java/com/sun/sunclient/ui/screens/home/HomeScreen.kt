@@ -36,6 +36,7 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToCourses: () -> Unit,
     onNavigateToTimetable: () -> Unit,
+    onNavigateToAttendance: () -> Unit,
     mainViewModel: MainViewModel
 ) {
 
@@ -201,7 +202,7 @@ fun HomeScreen(
             ServicesCard(
                 name = "Attendance",
                 icon = R.drawable.ic_attendance,
-                onServiceClick = { })
+                onServiceClick = { onNavigateToAttendance() })
         }
         item {
             ServicesCard(

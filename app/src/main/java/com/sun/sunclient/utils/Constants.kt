@@ -9,6 +9,8 @@ object Constants {
     const val USER_DETAILS_KEY = "user-details"
     const val USER_PROFILE_KEY = "user-profile"
     const val TIMETABLE_KEY = "timetable-key"
+    const val ATTENDANCE_STUDENT_KEY = "attendance-student-key"
+    const val ATTENDANCE_FACULTY_KEY = "attendance=faculty-key"
     const val IS_TIMETABLE_SCHEDULED = "is-timetable-scheduled"
     const val STUDENT = "STUDENT"
     const val ADMIN = "ADMIN"
