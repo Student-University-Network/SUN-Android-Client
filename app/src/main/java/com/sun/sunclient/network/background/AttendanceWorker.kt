@@ -166,12 +166,12 @@ class AttendanceWorker(context: Context, workerParams: WorkerParameters) :
             super.onScanResult(callbackType, result)
             val record = result.scanRecord?.serviceData
             record?.let {
-                val token = it.get(UUID)?.let { it1 -> String(it1) }
+                val token = it.get(UUID)?.let { it1 -> String(it1) } ?: return
                 Log.d(TAG, "onScanResult: token : $token")
-                if (!isMarked) {
+//                if (!isMarked) {
                     dataCallback.onDataUpdate(token ?: "")
-                }
-                isMarked = true
+//                }
+//                isMarked = true
             }
             Log.d(TAG, "onScanResult: got token, marked attendance")
             stopAttendance()

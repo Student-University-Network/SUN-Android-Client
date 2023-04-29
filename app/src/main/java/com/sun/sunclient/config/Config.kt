@@ -10,5 +10,5 @@ object Config {
 
     // currently needs to set ip address of your device to access local running backend
     // needs to replace it with domain for backend hosted in cloud
-    const val API_BASE_URL = "http://192.168.43.245:5001/api/"
+    const val API_BASE_URL = "http://ec2-3-6-37-217.ap-south-1.compute.amazonaws.com/api/"
 }
